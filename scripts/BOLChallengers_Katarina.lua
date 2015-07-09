@@ -1,58 +1,56 @@
 if myHero.charName ~= "Katarina" then return end
 
-local e = {}
+-- Ult Helper
 local lastAnimation = ""
 local ultActive = false
-local timeult = 0
+local deathLothusTime = 0
 
-lastE = 0
-eDelay = 3500 -- 3,5 seconds
+-- Ranges
+local wRange = 375
+local eRange = 700
+local qRange = 675
+local rRange = 550
 
-
-local Wrange = 375
-local Erange = 700
-local Qrange = 675
-local Rrange = 550
+-- Ignite
 local ignite = nil
-local iDMG = 0
+local igniteDMG = 0
 
-local ignite, iDMG = nil, 0 
+-- Checks
 local QREADY, WREADY, EREADY, RREADY = false
 
 function OnLoad()
 	Config = scriptConfig("Katarina Master", "Katarina")
 
 	Config:addSubMenu(myHero.charName.." Key Settings", "Keys")
-	Config.Keys:addParam("combokey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-	Config.Keys:addParam("harass", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("M"))
-	Config.Keys:addParam("farmkey", "Farm On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("N"))
+	Config.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
+	Config.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("M"))
+	Config.Keys:addParam("FarmKey", "Farm On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("N"))
 
 	Config:addSubMenu(myHero.charName.." Haras Settings", "Haras")
-	Config.Haras:addParam("UseQHaras", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-	Config.Haras:addParam("UseWHaras", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
-	Config.Haras:addParam("UseEHaras", "Use (E)", SCRIPT_PARAM_ONOFF, true)
+	Config.Haras:addParam("useQHarass", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+	Config.Haras:addParam("useWHarass", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
+	Config.Haras:addParam("useEHarass", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Config:addSubMenu(myHero.charName.." Combo Settings", "Combo")
-	Config.Combo:addParam("UseQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-	Config.Combo:addParam("UseW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
-	Config.Combo:addParam("UseE", "Use (E)", SCRIPT_PARAM_ONOFF, true) 
-	Config.Combo:addParam("UseR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
-	Config.Combo:addParam("UseEDel", "Humanizer", SCRIPT_PARAM_ONOFF, false)
+	Config.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+	Config.Combo:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
+	Config.Combo:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true) 
+	Config.Combo:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
 
-	Config:addSubMenu(myHero.charName.." Misc", "Misc")
-	Config.Misc:addParam("KSQ", "Auto KS with Q", SCRIPT_PARAM_ONOFF, true)
-	Config.Misc:addParam("KSW", "Auto KS with W", SCRIPT_PARAM_ONOFF, true)
-	Config.Misc:addParam("KSE", "Auto KS with E", SCRIPT_PARAM_ONOFF, true)
-	Config.Misc:addParam("KSIG", "Auto KS using ignite", SCRIPT_PARAM_ONOFF, true)
+	Config:addSubMenu(myHero.charName.." KS Settings", "KS")
+	Config.KS:addParam("ksWithQ", "KS with Q", SCRIPT_PARAM_ONOFF, true)
+	Config.KS:addParam("ksWithW", "KS with W", SCRIPT_PARAM_ONOFF, true)
+	Config.KS:addParam("ksWithE", "KS with E", SCRIPT_PARAM_ONOFF, true)
+	Config.KS:addParam("ksWithIgnite", "KS with ignite", SCRIPT_PARAM_ONOFF, true)
 
-	Config:addSubMenu(myHero.charName.." Farm", "farm")
-	Config.farm:addParam("UseQFarm", "Use Q", SCRIPT_PARAM_ONOFF, true)
-	Config.farm:addParam("UseWFarm", "Use W", SCRIPT_PARAM_ONOFF, true)
+	Config:addSubMenu(myHero.charName.." Farm", "Farm")
+	Config.Farm:addParam("useQFarm", "Use Q", SCRIPT_PARAM_ONOFF, true)
+	Config.Farm:addParam("useWFarm", "Use W", SCRIPT_PARAM_ONOFF, true)
 
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, Erange)
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, eRange)
 	ts.name = "Katarina"
 	Config:addTS(ts)
-	enemyMinions = minionManager(MINION_ENEMY, Qrange, myHero, MINION_SORT_MAXHEALTH_DEC)
+	enemyMinions = minionManager(MINION_ENEMY, qRange, myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
 		ignite = SUMMONER_1 
@@ -60,33 +58,22 @@ function OnLoad()
 		ignite = SUMMONER_2 
 	end
 
-	allyHeroes = GetAllyHeroes()
-	enemyHeroes = GetEnemyHeroes()
-	enemyMinions = minionManager(MINION_ENEMY, Erange, player, MINION_SORT_HEALTH_ASC)
-	JungleMobs = {}
-
-	for i, enemy in ipairs(GetEnemyHeroes()) do
-		table.insert(e, enemy)
-	end
-
-
-	PrintChat(">> Katarina Master loaded!")
+	PrintChat(">> Katarina Master by Challengers loaded!")
 end
 
 function OnTick()
 	Checks()
 	IgniteKS()
-	Human()
 
-	if Config.Keys.combokey then
+	if Config.Keys.comboKey then
 		Combo()
 	end
 
-	if Config.Keys.harass then
+	if Config.Keys.harassKey then
 		Harass()
 	end
 
-	if Config.Keys.farmkey then
+	if Config.Keys.FarmKey then
 		Farm()
 	end
 end
@@ -95,7 +82,7 @@ function Checks()
 	ts:update()
 	target = ts.target
 
-	ultActive = GetTickCount() <= timeult + GetLatency() + 50 or lastAnimation == "Spell4"
+	ultActive = GetTickCount() <= deathLothusTime + GetLatency() + 50 or lastAnimation == "Spell4"
 
 	QREADY = (myHero:CanUseSpell(_Q) == READY)
 	WREADY = (myHero:CanUseSpell(_W) == READY) 
@@ -106,27 +93,27 @@ end
 
 function Combo()
 	if ValidTarget(target) then
-		if EREADY and Config.Combo.UseE then
-			if GetDistance(target) <= Erange then
+		if EREADY and Config.Combo.useE then
+			if GetDistance(target) <= eRange then
 				CastSpell(_E, target)
 			end
 		end
 
-		if QREADY and Config.Combo.UseQ then 
-			if GetDistance(target) <= Qrange then
+		if QREADY and Config.Combo.useQ then 
+			if GetDistance(target) <= qRange then
 				CastSpell(_Q, target) 
 			end
 		end
 
-		if WREADY and Config.Combo.UseW then
-			if GetDistance(target) <= Wrange then
+		if WREADY and Config.Combo.useW then
+			if GetDistance(target) <= wRange then
 				CastSpell(_W)
 			end
 		end
 
-		if RREADY and not QREADY and not WREADY and not EREADY and Config.Combo.UseR then
-			if GetDistance(target) <= Rrange then
-				timeult = GetTickCount()
+		if RREADY and not QREADY and not WREADY and not EREADY and Config.Combo.useR then
+			if GetDistance(target) <= rRange then
+				deathLothusTime = GetTickCount()
 				CastSpell(_R)
 			end
 		end
@@ -135,8 +122,8 @@ end
 
 
 function AutoIgnite(enemy)
-	iDmg = ((IREADY and getDmg("IGNITE", enemy, myHero)) or 0)
-	if enemy.health <= iDmg and GetDistance(enemy) <= 600 and ignite ~= nil then
+	igniteDMG = ((IREADY and getDmg("IGNITE", enemy, myHero)) or 0)
+	if enemy.health <= igniteDMG and GetDistance(enemy) <= 600 and ignite ~= nil then
 		if IREADY then
 			CastSpell(ignite, enemy)
 		end 
@@ -145,7 +132,7 @@ end
 
 function IgniteKS()
 	if ValidTarget(target) then
-		if Config.Misc.KSIG then
+		if Config.KS.ksWithIgnite then
 			AutoIgnite(target)
 		end
 	end
@@ -154,19 +141,19 @@ end
 function KillSteal()
 	for i, enemy in ipairs(e) do
 		if ValidTarget(enemy) and GetDistance(enemy) < 700 then
-		if Config.Misc.KSQ then
+		if Config.KS.ksWithQ then
 			if QReady and getDmg("Q", enemy, myHero) > enemy.health then
 				CastSpell(_Q, enemy)
 				end
 			end
 
-			if Config.Misc.KSW then
+			if Config.KS.ksWithW then
 				if WReady and getDmg("W", enemy, myHero) > enemy.health then
 					CastSpell(_W)
 				end
 			end
 			
-			if Config.Misc.KSE then
+			if Config.KS.ksWithE then
 				if EReady and getDmg("E", enemy, myHero) > enemy.health then
 					CastSpell(_E, enemy)
 				end
@@ -188,20 +175,20 @@ function Harass()
 	end
 
 	if ValidTarget(target) then
-		if EREADY and Config.Haras.UseEHaras then
-			if GetDistance(target) <= Erange then
+		if EREADY and Config.Haras.useEHarass then
+			if GetDistance(target) <= eRange then
 				CastSpell(_E, target)
 			end
 		end
 
-		if QREADY and Config.Haras.UseQHaras then 
-			if GetDistance(target) <= Qrange then
+		if QREADY and Config.Haras.useQHarass then 
+			if GetDistance(target) <= qRange then
 				CastSpell(_Q, target) 
 			end
 		end
 
-		if WREADY and Config.Haras.UseWHaras then
-			if GetDistance(target) <= Wrange then
+		if WREADY and Config.Haras.useWHarass then
+			if GetDistance(target) <= wRange then
 				CastSpell(_W)
 			end
 		end
@@ -211,25 +198,18 @@ end
 function Farm()
 	enemyMinions:update()
 	for i, minion in ipairs(enemyMinions.objects) do
-		if Config.farm.UseQFarm then
-			if ValidTarget(minion) and GetDistance(minion) <= Qrange and QREADY and getDmg("Q", minion, myHero) > minion.health then
+		if Config.Farm.useQFarm then
+			if ValidTarget(minion) and GetDistance(minion) <= qRange and QREADY and getDmg("Q", minion, myHero) > minion.health then
 				CastSpell(_Q, minion)
 			end
 		end
 	end
 	
 	for i, minion in ipairs(enemyMinions.objects) do
-		if Config.farm.UseWFarm then
-			if ValidTarget(minion) and GetDistance(minion) <= Wrange and WREADY and getDmg("W", minion, myHero) > minion.health then
+		if Config.Farm.useWFarm then
+			if ValidTarget(minion) and GetDistance(minion) <= wRange and WREADY and getDmg("W", minion, myHero) > minion.health then
 				CastSpell(_W)
 			end
 		end
-	end
-end
-
-function Human()
-	if lastE + eDelay > GetTickCount() then
-		lastE = GetTickCount()
-		Combo()
 	end
 end
