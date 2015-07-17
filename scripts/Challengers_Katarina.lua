@@ -1,4 +1,549 @@
--- Challengers Katarina
+--[[
+	Challengers Katarina by Challengers
+	========================================================================
 
-assert(load(Base64Decode(
-"LS1bWw0KCUNoYWxsZW5nZXJzIEthdGFyaW5hIGJ5IENoYWxsZW5nZXJzDQoJPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQoNCglDaGFuZ2Vsb2chDQoJVmVyc2lvbjogMS4xDQoJCSogQWRkZWQgV2FyZCBKdW1wIChDcmVkaXRzIHRvIFNrZWVtKS4NCgkJKiBBZGQgYXV0byBaaG9ueWFzLg0KCQkqIFJld2FvcmsgaWduaXRlLg0KDQoJVmVyc2lvbjogMS4wDQoJCSogQ29zdG9taXphYmxlIEtleSBTZXR0aW5ncy4NCgkJKiBDb3N0b21pemFibGUgSGFyYXNzLCB1c2UgUSwgVywgRS4NCgkJKiBDdXN0b21pemFibGUgRnVsbCBjb21iby4gY2hhbmdlICJRRVdSIiwgIkVRV1IuDQoJCSogQ3VzdG9taXphYmxlIEtTIHNldHRpbmdzIHVzaW5nIHNraWxscyBhbmQgaWduaXRlLg0KCQkqIEN1c3RvbWl6YWJsZSBmYXJtIHdpdGggUSwgVy4NCl1dLS0gDQoNCmlmIG15SGVyby5jaGFyTmFtZSB+PSAiS2F0YXJpbmEiIHRoZW4NCglyZXR1cm4NCmVuZA0KDQotLSBJbmZvDQpsb2NhbCB2ZXJzaW9uID0gMS4xDQoNCi0tIFVsdCBIZWxwZXINCmxvY2FsIFVMVCA9IHsNCgl1c2luZyAgPSBmYWxzZSwNCglsYXN0ID0gMA0KfQ0KDQotLSBSYW5nZXMNCmxvY2FsIHdSYW5nZSA9IDM3NQ0KbG9jYWwgZVJhbmdlID0gNzAwDQpsb2NhbCBxUmFuZ2UgPSA2NzUNCmxvY2FsIHJSYW5nZSA9IDU1MA0KDQotLSBJZ25pdGUNCmxvY2FsIGlnbml0ZSA9IG5pbA0KDQotLSBXYXJkIEp1bXAgYnkgU2tlZW0NCmxvY2FsIGxhc3RKdW1wID0gMA0KbG9jYWwgd2FyZHMgPSB7DQoJU2lnaHRTdG9uZSA9ICJpdGVtZ2hvc3R3YXJkIiwNCglTaWdodFdhcmQgPSAic2lnaHR3YXJkIiwNCglWaXNpb25XYXJkID0gInZpc2lvbndhcmQiLA0KCVRyaW5rZXQxID0gInRyaW5rZXR0b3RlbWx2bDEiLA0KCVRyaW5rZXQyID0gInRyaW5rZXR0b3RlbWx2bDIiLA0KCVRyaW5rZXQzID0gInRyaW5rZXR0b3RlbWx2bDMiLA0KCVRyaW5rZXQ0ID0gInRyaW5rZXR0b3RlbWx2bDNiIg0KfQ0KDQotLSBVc2luZyBJdGVtcw0KbG9jYWwgSVRFTVMgPSB7DQoJemhvbnlhc2xvdCA9IG5pbCwNCgl6aG9ueWFyZWFkeSA9IGZhbHNlDQp9DQoNCi0tIENoZWNrcw0KbG9jYWwgQ0hFQ0tTID0gew0KCVEgPSBmYWxzZSwNCglXID0gZmFsc2UsDQoJRSA9IGZhbHNlLA0KCVIgPSBmYWxzZQ0KfQ0KDQpsb2NhbCBVUERBVEVfSE9TVCA9ICJyYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tIg0KbG9jYWwgVVBEQVRFX1BBVEggPSAiL2JvbGNoYWxsZW5nZXJzL2JvbC9tYXN0ZXIvc2NyaXB0cy9DaGFsbGVuZ2Vyc19LYXRhcmluYS5sdWEiLi4iP3JhbmQ9Ii4ubWF0aC5yYW5kb20oMSwxMDAwMCkNCmxvY2FsIFVQREFURV9GSUxFX1BBVEggPSBTQ1JJUFRfUEFUSCAuLiBHZXRDdXJyZW50RW52KCkuRklMRV9OQU1FDQpsb2NhbCBVUERBVEVfVVJMID0gImh0dHBzOi8vIi4uVVBEQVRFX0hPU1QuLlVQREFURV9QQVRIDQoNCmZ1bmN0aW9uIEluZm9NZXNzYWdlKG1zZykNCglwcmludCgiPGZvbnQgY29sb3I9XCIjNjY5OWZmXCI+PGI+Q2hhbGxlbmdlcnMgS2F0YXJpbmE6PC9iPjwvZm9udD4gPGZvbnQgY29sb3I9XCIjRkZGRkZGXCI+Ii4ubXNnLi4iLjwvZm9udD4iKQ0KZW5kDQoNCmxvY2FsIFNlcnZlckRhdGEgPSBHZXRXZWJSZXN1bHQoVVBEQVRFX0hPU1QsICIvYm9sY2hhbGxlbmdlcnMvYm9sL21hc3Rlci9zY3JpcHRzL0NoYWxsZW5nZXJzX0thdGFyaW5hLnZlcnNpb24iKQ0KDQppZiBTZXJ2ZXJEYXRhIHRoZW4NCglTZXJ2ZXJWZXJzaW9uID0gdHlwZSh0b251bWJlcihTZXJ2ZXJEYXRhKSkgPT0gIm51bWJlciIgYW5kIHRvbnVtYmVyKFNlcnZlckRhdGEpIG9yIG5pbA0KCWlmIFNlcnZlclZlcnNpb24gdGhlbg0KCQlpZiB0b251bWJlcih2ZXJzaW9uKSA8IFNlcnZlclZlcnNpb24gdGhlbg0KCQkJSW5mb01lc3NhZ2UoIk5ldyB2ZXJzaW9uIGF2YWlsYWJsZSAoIi4uU2VydmVyVmVyc2lvbi4uIikiKQ0KCQkJSW5mb01lc3NhZ2UoIlVwZGF0aW5nLCBwbGVhc2UgZG9uJ3QgcHJlc3MgRjkiKQ0KCQkJRGVsYXlBY3Rpb24oZnVuY3Rpb24oKSBEb3dubG9hZEZpbGUoVVBEQVRFX1VSTCwgVVBEQVRFX0ZJTEVfUEFUSCwgZnVuY3Rpb24gKCkgSW5mb01lc3NhZ2UoIlN1Y2Nlc3NmdWxseSB1cGRhdGVkLiAoIi4udmVyc2lvbi4uIiA9PiAiLi5TZXJ2ZXJWZXJzaW9uLi4iKSwgcHJlc3MgRjkgdHdpY2UgdG8gbG9hZCB0aGUgdXBkYXRlZCB2ZXJzaW9uLiIpIGVuZCkgZW5kLCAzKQ0KCQllbHNlDQoJCQlJbmZvTWVzc2FnZSgiWW91IGhhdmUgZ290IHRoZSBsYXRlc3QgdmVyc2lvbiAoIi4uU2VydmVyVmVyc2lvbi4uIikiKQ0KCQllbmQNCgllbmQNCmVsc2UNCglJbmZvTWVzc2FnZSgiRXJyb3IgZG93bmxvYWRpbmcgdmVyc2lvbiBpbmZvIikNCmVuZA0KDQpmdW5jdGlvbiBPbkxvYWQoKQ0KCS0tIExvYWQgTWVudQ0KCU1lbnUgPSBzY3JpcHRDb25maWcoIkNoYWxsZW5nZXJzIEthdGFyaW5hIiwgIkthdGFyaW5hIikNCg0KCU1lbnU6YWRkU3ViTWVudSgiWyIuLm15SGVyby5jaGFyTmFtZS4uIl0gLSBLZXkgU2V0dGluZ3MiLCAiS2V5cyIpDQoJCU1lbnUuS2V5czphZGRQYXJhbSgiY29tYm9LZXkiLCAiQ29tYm8ga2V5IiwgU0NSSVBUX1BBUkFNX09OS0VZRE9XTiwgZmFsc2UsIDMyKQ0KCQlNZW51LktleXM6YWRkUGFyYW0oImhhcmFzc0tleSIsICJIYXJhc3MgS2V5IiwgU0NSSVBUX1BBUkFNX09OS0VZRE9XTiwgZmFsc2UsIHN0cmluZy5ieXRlKCJNIikpDQoJCU1lbnUuS2V5czphZGRQYXJhbSgiZmFybUtleSIsICJGYXJtIE9uL09mZiIsIFNDUklQVF9QQVJBTV9PTktFWVRPR0dMRSwgZmFsc2UsIHN0cmluZy5ieXRlKCJOIikpDQoJCU1lbnUuS2V5czphZGRQYXJhbSgiY2xlYXJLZXkiLCAiTGFuZSBDbGVhciBPbi9PZmYiLCBTQ1JJUFRfUEFSQU1fT05LRVlUT0dHTEUsIGZhbHNlLCBzdHJpbmcuYnl0ZSgiTCIpKQ0KDQoJTWVudTphZGRTdWJNZW51KCJbIi4ubXlIZXJvLmNoYXJOYW1lLi4iXSAtIEhhcmFzcyBTZXR0aW5ncyIsICJIYXJhcyIpDQoJCU1lbnUuSGFyYXM6YWRkUGFyYW0oInVzZVFIYXJhc3MiLCAiVXNlIChRKSIsIFNDUklQVF9QQVJBTV9PTk9GRiwgdHJ1ZSkNCgkJTWVudS5IYXJhczphZGRQYXJhbSgidXNlV0hhcmFzcyIsICJVc2UgKFcpIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKSANCgkJTWVudS5IYXJhczphZGRQYXJhbSgidXNlRUhhcmFzcyIsICJVc2UgKEUpIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KDQoJTWVudTphZGRTdWJNZW51KCJbIi4ubXlIZXJvLmNoYXJOYW1lLi4iXSAtIENvbWJvIFNldHRpbmdzIiwgIkNvbWJvIikNCgkJTWVudS5Db21ibzphZGRQYXJhbSgidXNlUSIsICJVc2UgKFEpIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KCQlNZW51LkNvbWJvOmFkZFBhcmFtKCJ1c2VXIiwgIlVzZSAoVykiLCBTQ1JJUFRfUEFSQU1fT05PRkYsIHRydWUpIA0KCQlNZW51LkNvbWJvOmFkZFBhcmFtKCJ1c2VFIiwgIlVzZSAoRSkiLCBTQ1JJUFRfUEFSQU1fT05PRkYsIHRydWUpDQoJCU1lbnUuQ29tYm86YWRkUGFyYW0oInVzZUlnbml0ZSIsICJVc2UgSWduaXRlIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KCQlNZW51LkNvbWJvOmFkZFN1Yk1lbnUoIlsiLi5teUhlcm8uY2hhck5hbWUuLiJdIC0gVWx0aW1hdGUgU2V0dGluZ3MiLCAidWx0aW1hdGUiKSANCgkJCU1lbnUuQ29tYm8udWx0aW1hdGU6YWRkUGFyYW0oInVzZVIiLCAiVXNlIChSKSIsIFNDUklQVF9QQVJBTV9PTk9GRiwgdHJ1ZSkNCgkJCU1lbnUuQ29tYm8udWx0aW1hdGU6YWRkUGFyYW0oInN0b3BjbGljayIsICAiU3RvcCAoUikgV2l0aCBSaWdodCBDbGljayIsIFNDUklQVF9QQVJBTV9PTk9GRiwgZmFsc2UpDQoJCQlNZW51LkNvbWJvLnVsdGltYXRlOmFkZFBhcmFtKCJ1bHRNb2RlIiwgIlVsdGltYXRlIE1vZGUiLCBTQ1JJUFRfUEFSQU1fTElTVCwgMiwgeyJRRVdSIiwgIkVRV1IifSkNCg0KCU1lbnU6YWRkU3ViTWVudSgiWyIuLm15SGVyby5jaGFyTmFtZS4uIl0gLSBLUyBTZXR0aW5ncyIsICJLUyIpDQoJCU1lbnUuS1M6YWRkUGFyYW0oImtzV2l0aFEiLCAiS1Mgd2l0aCAoUSkiLCBTQ1JJUFRfUEFSQU1fT05PRkYsIHRydWUpDQoJCU1lbnUuS1M6YWRkUGFyYW0oImtzV2l0aFciLCAiS1Mgd2l0aCAoVykiLCBTQ1JJUFRfUEFSQU1fT05PRkYsIHRydWUpDQoJCU1lbnUuS1M6YWRkUGFyYW0oImtzV2l0aEUiLCAiS1Mgd2l0aCAoRSkiLCBTQ1JJUFRfUEFSQU1fT05PRkYsIHRydWUpDQoNCglNZW51OmFkZFN1Yk1lbnUoIlsiLi5teUhlcm8uY2hhck5hbWUuLiJdIC0gRmFybSBTZXR0aW5ncyIsICJGYXJtIikNCgkJTWVudS5GYXJtOmFkZFBhcmFtKCJ1c2VRRmFybSIsICJVc2UgKFEpIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KCQlNZW51LkZhcm06YWRkUGFyYW0oInVzZVdGYXJtIiwgIlVzZSAoVykiLCBTQ1JJUFRfUEFSQU1fT05PRkYsIHRydWUpDQoNCglNZW51OmFkZFN1Yk1lbnUoIlsiLi5teUhlcm8uY2hhck5hbWUuLiJdIC0gTGFuZSBDbGVhciBTZXR0aW5ncyIsICJMYW5lQ2xlYXIiKQ0KCQlNZW51LkxhbmVDbGVhcjphZGRQYXJhbSgidXNlUSIsICJVc2UgKFEpIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KCQlNZW51LkxhbmVDbGVhcjphZGRQYXJhbSgidXNlVyIsICJVc2UgKFcpIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KCQlNZW51LkxhbmVDbGVhcjphZGRQYXJhbSgidXNlRSIsICJVc2UgKEUpIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KDQoJTWVudTphZGRTdWJNZW51KCJbIi4ubXlIZXJvLmNoYXJOYW1lLi4iXSAtIE1pc2MgU2V0dGluZ3MiLCAiTWlzYyIpDQoJCU1lbnUuTWlzYzphZGRTdWJNZW51KCJbIi4ubXlIZXJvLmNoYXJOYW1lLi4iXSAtIFdhcmQgSnVtcCBTZXR0aW5ncyIsICJXYXJkSnVtcCIpIA0KCQkJTWVudS5NaXNjLldhcmRKdW1wOmFkZFBhcmFtKCd3YXJkanVtcEtleScsICdXYXJkIEp1bXAgS2V5JywgIFNDUklQVF9QQVJBTV9PTktFWURPV04sIGZhbHNlLCBzdHJpbmcuYnl0ZSgiSCIpKQ0KCQkJTWVudS5NaXNjLldhcmRKdW1wOmFkZFBhcmFtKCJtYXhqdW1wIiwgIkFsd2F5cyBXYXJkIEp1bXAgYXQgTWF4IFJhbmdlIiwgU0NSSVBUX1BBUkFNX09OT0ZGLCB0cnVlKQ0KCQlNZW51Lk1pc2M6YWRkU3ViTWVudSgiWyIuLm15SGVyby5jaGFyTmFtZS4uIl0gLSBJdGVtcyBTZXR0aW5ncyIsICJJdGVtcyIpIA0KCQkJTWVudS5NaXNjLkl0ZW1zOmFkZFBhcmFtKCJ1c2VaaG9ueWEiLCAiVXNlIFpob255YSIsIFNDUklQVF9QQVJBTV9PTk9GRiwgdHJ1ZSkNCgkJCU1lbnUuTWlzYy5JdGVtczphZGRQYXJhbSgiemhvbnlhSHAiLCAiJSBocCB0byBaaG9ueWEiLCBTQ1JJUFRfUEFSQU1fU0xJQ0UsIDI1LCAwLCAxMDAsIDApDQoNCgktLSBQZXJtYSBTaG93cw0KCU1lbnUuS2V5czpwZXJtYVNob3coImNvbWJvS2V5IikNCglNZW51LktleXM6cGVybWFTaG93KCJoYXJhc3NLZXkiKQ0KCU1lbnUuS2V5czpwZXJtYVNob3coImNsZWFyS2V5IikNCglNZW51LktleXM6cGVybWFTaG93KCJmYXJtS2V5IikNCg0KCS0tIFRhcmdldCBTZWxlY3Rvcg0KCXRzID0gVGFyZ2V0U2VsZWN0b3IoVEFSR0VUX0xPV19IUF9QUklPUklUWSwgZVJhbmdlKQ0KCXRzLm5hbWUgPSAiS2F0YXJpbmEiDQoJTWVudTphZGRUUyh0cykNCg0KCS0tIE1pbmlvbnMNCgllbmVteU1pbmlvbnMgPSBtaW5pb25NYW5hZ2VyKE1JTklPTl9FTkVNWSwgZVJhbmdlLCBteUhlcm8sIE1JTklPTl9TT1JUX01BWEhFQUxUSF9ERUMpDQoJYWxseU1pbmlvbnMgPSBtaW5pb25NYW5hZ2VyKE1JTklPTl9BTExZLCBlUmFuZ2UsIG15SGVybywgTUlOSU9OX1NPUlRfTUFYSEVBTFRIX0RFQykNCglqdW5nbGVNaW5pb25zID0gbWluaW9uTWFuYWdlcihNSU5JT05fSlVOR0xFLCBlUmFuZ2UsIG15SGVybywgTUlOSU9OX1NPUlRfTUFYSEVBTFRIX0RFQykNCglvdGhlck1pbmlvbnMgPSBtaW5pb25NYW5hZ2VyKE1JTklPTl9PVEhFUiwgZVJhbmdlLCBteUhlcm8sIE1JTklPTl9TT1JUX01BWEhFQUxUSF9ERUMpDQoNCgktLSBJZ25pdGUgY2hlY2sNCglpZ25pdGUgPSBteUhlcm86R2V0U3BlbGxEYXRhKFNVTU1PTkVSXzEpLm5hbWU6ZmluZCgic3VtbW9uZXJkb3QiKSBhbmQgU1VNTU9ORVJfMSBvciBteUhlcm86R2V0U3BlbGxEYXRhKFNVTU1PTkVSXzIpLm5hbWU6ZmluZCgic3VtbW9uZXJkb3QiKSBhbmQgU1VNTU9ORVJfMiBvciBuaWwNCg0KCS0tIE92ZXJyaWRlIEdsb2JhbHMgQ3JlZGl0cyB0byBBcm9jIDozDQoJX0cubXlIZXJvLlNhdmVNb3ZlID0gX0cubXlIZXJvLk1vdmVUbw0KCV9HLm15SGVyby5TYXZlQXR0YWNrID0gX0cubXlIZXJvLkF0dGFjaw0KCV9HLm15SGVyby5Nb3ZlVG8gPSBmdW5jdGlvbiguLi4pIGlmIG5vdCBVTFQudXNpbmcgdGhlbiBfRy5teUhlcm8uU2F2ZU1vdmUoLi4uKSBlbmQgZW5kDQoJX0cubXlIZXJvLkF0dGFjayA9IGZ1bmN0aW9uKC4uLikgaWYgbm90IFVMVC51c2luZyB0aGVuIF9HLm15SGVyby5TYXZlQXR0YWNrKC4uLikgZW5kIGVuZA0KDQoJLS0gV2FyZHMNCgl3YXJkc1RhYmxlID0ge30NCglmb3IgaSA9IDAsIG9iak1hbmFnZXIubWF4T2JqZWN0cyBkbw0KCQlsb2NhbCBvYmogPSBvYmpNYW5hZ2VyOmdldE9iamVjdChpKQ0KCQlpZiBvYmogYW5kIG9iai52YWxpZCBhbmQgKHN0cmluZy5maW5kKG9iai5uYW1lLCAiV2FyZCIpIH49IG5pbCBvciBzdHJpbmcuZmluZChvYmoubmFtZSwgIldyaWdnbGUiKSB+PSBuaWwgb3Igc3RyaW5nLmZpbmQob2JqLm5hbWUsICJUcmlua2V0IikpIHRoZW4NCgkJCXRhYmxlLmluc2VydCh3YXJkc1RhYmxlLCBvYmopDQoJCWVuZA0KCWVuZA0KDQoJSW5mb01lc3NhZ2UoIlZlcnNpb246ICIuLiB2ZXJzaW9uIC4uICIgbG9hZGVkISIpDQplbmQNCg0KZnVuY3Rpb24gT25UaWNrKCkNCglDaGVja3MoKQ0KDQoJaWYgTWVudS5NaXNjLkl0ZW1zLnVzZVpob255YSB0aGVuDQoJCUNoZWNrWmhvbnlhKCkNCgllbmQNCg0KCWlmIE1lbnUuS2V5cy5jb21ib0tleSB0aGVuDQoJCUNvbWJvKCkNCgkJcmV0dXJuDQoJZW5kDQoNCglpZiBNZW51LktleXMuaGFyYXNzS2V5IHRoZW4NCgkJSGFyYXNzKCkNCgkJcmV0dXJuDQoJZW5kDQoNCglpZiBNZW51LktleXMuZmFybUtleSB0aGVuDQoJCUZhcm0oKQ0KCWVuZA0KDQoJaWYgTWVudS5LZXlzLmNsZWFyS2V5IHRoZW4NCgkJTGFuZUNsZWFyKCkNCgllbmQNCg0KCWlmIE1lbnUuTWlzYy5XYXJkSnVtcC53YXJkanVtcEtleSB0aGVuDQogICAgCQlsb2NhbCBXYXJkUG9zID0gKEdldERpc3RhbmNlU3FyKG1vdXNlUG9zKSA8PSA2MDAgKiA2MDAgYW5kIG1vdXNlUG9zKSBvciAoTWVudS5NaXNjLldhcmRKdW1wLm1heGp1bXAgYW5kIG15SGVybyArIChWZWN0b3IobW91c2VQb3MpIC0gbXlIZXJvKTpub3JtYWxpemVkKCkqNTkwKQ0KCQlpZiBXYXJkUG9zIHRoZW4NCgkJCVdhcmRKdW1wKFdhcmRQb3MueCwgV2FyZFBvcy56KQ0KCQllbmQNCgllbmQNCg0KCWlmIE1lbnUuQ29tYm8udXNlSWduaXRlIGFuZCBpZ25pdGUgfj0gbmlsIHRoZW4NCgkJQXV0b0lnbml0ZSgpDQoJZW5kDQplbmQNCg0KZnVuY3Rpb24gQ2hlY2tzKCkNCgl0czp1cGRhdGUoKQ0KCXRhcmdldCA9IHRzLnRhcmdldA0KDQoJQ0hFQ0tTLlEgPSAobXlIZXJvOkNhblVzZVNwZWxsKF9RKSA9PSBSRUFEWSkNCglDSEVDS1MuVyA9IChteUhlcm86Q2FuVXNlU3BlbGwoX1cpID09IFJFQURZKSANCglDSEVDS1MuRSA9IChteUhlcm86Q2FuVXNlU3BlbGwoX0UpID09IFJFQURZKQ0KCUNIRUNLUy5SID0gKG15SGVybzpDYW5Vc2VTcGVsbChfUikgPT0gUkVBRFkpDQoNCglJVEVNUy56aG9ueWFzbG90ID0gR2V0SW52ZW50b3J5U2xvdEl0ZW0oMzE1NykNCglJVEVNUy56aG9ueWFyZWFkeSA9IChJVEVNUy56aG9ueWFzbG90IH49IG5pbCBhbmQgbXlIZXJvOkNhblVzZVNwZWxsKElURU1TLnpob255YXNsb3QpID09IFJFQURZKQ0KDQoJaWYgVUxULnVzaW5nIHRoZW4NCgkJaWYgKG9zLmNsb2NrKCkgLSBVTFQubGFzdCkgPiAyLjUgdGhlbg0KCQkJVUxULnVzaW5nID0gZmFsc2UNCgkJCVVMVC5sYXN0ICA9IDANCgkJZW5kDQoJZW5kDQplbmQNCg0KZnVuY3Rpb24gQ29tYm8oKQ0KCWlmIFZhbGlkVGFyZ2V0KHRhcmdldCkgdGhlbg0KCQlpZiBNZW51LkNvbWJvLnVsdGltYXRlLnVsdE1vZGUgPT0gMSB0aGVuDQoJCQlpZiBDSEVDS1MuUSBhbmQgTWVudS5Db21iby51c2VRIHRoZW4gDQoJCQkJaWYgR2V0RGlzdGFuY2UodGFyZ2V0KSA8PSBxUmFuZ2UgdGhlbg0KCQkJCQlDYXN0U3BlbGwoX1EsIHRhcmdldCkgDQoJCQkJZW5kDQoJCQllbmQNCg0KCQkJaWYgQ0hFQ0tTLkUgYW5kIE1lbnUuQ29tYm8udXNlRSB0aGVuDQoJCQkJaWYgR2V0RGlzdGFuY2UodGFyZ2V0KSA8PSBlUmFuZ2UgdGhlbg0KCQkJCQlDYXN0U3BlbGwoX0UsIHRhcmdldCkNCgkJCQllbmQNCgkJCWVuZA0KDQoNCgkJCWlmIENIRUNLUy5XIGFuZCBNZW51LkNvbWJvLnVzZVcgdGhlbg0KCQkJCWlmIEdldERpc3RhbmNlKHRhcmdldCkgPD0gd1JhbmdlIHRoZW4NCgkJCQkJQ2FzdFNwZWxsKF9XKQ0KCQkJCWVuZA0KCQkJZW5kDQoNCgkJCWlmIENIRUNLUy5SIGFuZCBub3QgQ0hFQ0tTLlEgYW5kIG5vdCBDSEVDS1MuVyBhbmQgbm90IENIRUNLUy5FIGFuZCBNZW51LkNvbWJvLnVsdGltYXRlLnVzZVIgdGhlbg0KCQkJCWlmIEdldERpc3RhbmNlKHRhcmdldCkgPD0gclJhbmdlIHRoZW4NCgkJCQkJQ2FzdFNwZWxsKF9SKQ0KCQkJCWVuZA0KCQkJZW5kDQoJCWVsc2VpZiBNZW51LkNvbWJvLnVsdGltYXRlLnVsdE1vZGUgPT0gMiB0aGVuDQoJCQlpZiBDSEVDS1MuRSBhbmQgTWVudS5Db21iby51c2VFIHRoZW4NCgkJCQlpZiBHZXREaXN0YW5jZSh0YXJnZXQpIDw9IGVSYW5nZSB0aGVuDQoJCQkJCUNhc3RTcGVsbChfRSwgdGFyZ2V0KQ0KCQkJCWVuZA0KCQkJZW5kDQoNCgkJCWlmIENIRUNLUy5RIGFuZCBNZW51LkNvbWJvLnVzZVEgdGhlbiANCgkJCQlpZiBHZXREaXN0YW5jZSh0YXJnZXQpIDw9IHFSYW5nZSB0aGVuDQoJCQkJCUNhc3RTcGVsbChfUSwgdGFyZ2V0KQ0KCQkJCWVuZA0KCQkJZW5kDQoNCgkJCWlmIENIRUNLUy5XIGFuZCBNZW51LkNvbWJvLnVzZVcgdGhlbg0KCQkJCWlmIEdldERpc3RhbmNlKHRhcmdldCkgPD0gd1JhbmdlIHRoZW4NCgkJCQkJQ2FzdFNwZWxsKF9XKQ0KCQkJCWVuZA0KCQkJZW5kDQoNCgkJCWlmIENIRUNLUy5SIGFuZCBub3QgQ0hFQ0tTLlEgYW5kIG5vdCBDSEVDS1MuVyBhbmQgbm90IENIRUNLUy5FIGFuZCBNZW51LkNvbWJvLnVsdGltYXRlLnVzZVIgdGhlbg0KCQkJCWlmIEdldERpc3RhbmNlKHRhcmdldCkgPD0gclJhbmdlIHRoZW4NCgkJCQkJQ2FzdFNwZWxsKF9SKQ0KCQkJCWVuZA0KCQkJZW5kDQoJCWVuZA0KCWVuZA0KZW5kDQoNCmZ1bmN0aW9uIE9uV25kTXNnKG1zZywga2V5KQ0KCWlmIE1lbnUuQ29tYm8udWx0aW1hdGUuc3RvcGNsaWNrIHRoZW4NCgkJaWYgbXNnID09IFdNX1JCVVRUT05ET1dOIGFuZCBVTFQudXNpbmcgdGhlbiANCgkJCVVMVC51c2luZyA9IGZhbHNlDQoJCWVuZA0KCWVuZA0KZW5kDQoNCg0KZnVuY3Rpb24gT25Qcm9jZXNzU3BlbGwob2JqLCBzcGVsbCkNCglpZiBteUhlcm8uZGVhZCB0aGVuDQoJCXJldHVybg0KCWVuZA0KCQ0KCWlmIG9iaiA9PSBteUhlcm8gdGhlbg0KCQlpZiBzcGVsbC5uYW1lID09ICJzcGVsbDQiIHRoZW4NCgkJCVVMVC51c2luZyA9IHRydWUNCgkJCVVMVC5sYXN0ICA9IG9zLmNsb2NrKCkNCgkJZW5kDQoJZW5kDQplbmQNCg0KZnVuY3Rpb24gT25SZW1vdmVCdWZmKHVuaXQsIGJ1ZmYpDQoJaWYgdW5pdC5pc01lIGFuZCBidWZmLm5hbWUgPT0gImthdGFyaW5hcnNvdW5kIiB0aGVuDQoJCVVMVC51c2luZyA9IGZhbHNlDQoJCVVMVC5sYXN0ICA9IDANCgllbmQNCmVuZA0KDQpmdW5jdGlvbiBBdXRvSWduaXRlKCkNCglpZiBteUhlcm86Q2FuVXNlU3BlbGwoaWduaXRlKSA9PSBSRUFEWSB0aGVuDQoJCWZvciBpLCBlbmVteSBpbiBpcGFpcnMoR2V0RW5lbXlIZXJvZXMoKSkgZG8NCgkJCWlmIFZhbGlkVGFyZ2V0KGVuZW15LCA2MDApIGFuZCBlbmVteS5oZWFsdGggPD0gZ2V0RG1nKCdJR05JVEUnLCBlbmVteSwgbXlIZXJvKSB0aGVuDQoJCQkJQ2FzdFNwZWxsKGlnbml0ZSwgZW5lbXkpDQoJCQllbmQNCgkJZW5kDQoJZW5kIA0KZW5kDQoNCmZ1bmN0aW9uIEtpbGxTdGVhbCgpDQoJZm9yIGksIGVuZW15IGluIGlwYWlycyhHZXRFbmVteUhlcm9lcygpKSBkbw0KCQlpZiBWYWxpZFRhcmdldChlbmVteSkgYW5kIEdldERpc3RhbmNlKGVuZW15KSA8IDcwMCB0aGVuDQoJCQlpZiBNZW51LktTLmtzV2l0aFEgdGhlbg0KCQkJCWlmIENIRUNLUy5RIGFuZCBnZXREbWcoIlEiLCBlbmVteSwgbXlIZXJvKSA+IGVuZW15LmhlYWx0aCB0aGVuDQoJCQkJCUNhc3RTcGVsbChfUSwgZW5lbXkpDQoJCQkJZW5kDQoJCQllbmQNCg0KCQkJaWYgTWVudS5LUy5rc1dpdGhXIHRoZW4NCgkJCQlpZiBDSEVDS1MuVyBhbmQgZ2V0RG1nKCJXIiwgZW5lbXksIG15SGVybykgPiBlbmVteS5oZWFsdGggdGhlbg0KCQkJCQlDYXN0U3BlbGwoX1cpDQoJCQkJZW5kDQoJCQllbmQNCgkJCQ0KCQkJaWYgTWVudS5LUy5rc1dpdGhFIHRoZW4NCgkJCQlpZiBDSEVDS1MuRSBhbmQgZ2V0RG1nKCJFIiwgZW5lbXksIG15SGVybykgPiBlbmVteS5oZWFsdGggdGhlbg0KCQkJCQlDYXN0U3BlbGwoX0UsIGVuZW15KQ0KCQkJCWVuZA0KCQkJZW5kDQoJCWVuZA0KCWVuZA0KZW5kDQoNCmZ1bmN0aW9uIEhhcmFzcygpDQoJaWYgbm90IHRhcmdldCB0aGVuDQoJCXJldHVybg0KCWVuZA0KDQoJaWYgVmFsaWRUYXJnZXQodGFyZ2V0KSB0aGVuDQoJCWlmIENIRUNLUy5FIGFuZCBNZW51LkhhcmFzLnVzZUVIYXJhc3MgdGhlbg0KCQkJaWYgR2V0RGlzdGFuY2UodGFyZ2V0KSA8PSBlUmFuZ2UgdGhlbg0KCQkJCUNhc3RTcGVsbChfRSwgdGFyZ2V0KQ0KCQkJZW5kDQoJCWVuZA0KDQoJCWlmIENIRUNLUy5RIGFuZCBNZW51LkhhcmFzLnVzZVFIYXJhc3MgdGhlbiANCgkJCWlmIEdldERpc3RhbmNlKHRhcmdldCkgPD0gcVJhbmdlIHRoZW4NCgkJCQlDYXN0U3BlbGwoX1EsIHRhcmdldCkgDQoJCQllbmQNCgkJZW5kDQoNCgkJaWYgQ0hFQ0tTLlcgYW5kIE1lbnUuSGFyYXMudXNlV0hhcmFzcyB0aGVuDQoJCQlpZiBHZXREaXN0YW5jZSh0YXJnZXQpIDw9IHdSYW5nZSB0aGVuDQoJCQkJQ2FzdFNwZWxsKF9XKQ0KCQkJZW5kDQoJCWVuZA0KCWVuZA0KZW5kDQoNCmZ1bmN0aW9uIEZhcm0oKQ0KCWVuZW15TWluaW9uczp1cGRhdGUoKQ0KCWZvciBpLCBtaW5pb24gaW4gaXBhaXJzKGVuZW15TWluaW9ucy5vYmplY3RzKSBkbw0KCQlpZiBNZW51LkZhcm0udXNlUUZhcm0gdGhlbg0KCQkJaWYgVmFsaWRUYXJnZXQobWluaW9uKSBhbmQgR2V0RGlzdGFuY2UobWluaW9uKSA8PSBxUmFuZ2UgYW5kIENIRUNLUy5RIGFuZCBnZXREbWcoIlEiLCBtaW5pb24sIG15SGVybykgPiBtaW5pb24uaGVhbHRoIHRoZW4NCgkJCQlDYXN0U3BlbGwoX1EsIG1pbmlvbikNCgkJCWVuZA0KCQllbmQNCgllbmQNCgkNCglmb3IgaSwgbWluaW9uIGluIGlwYWlycyhlbmVteU1pbmlvbnMub2JqZWN0cykgZG8NCgkJaWYgTWVudS5GYXJtLnVzZVdGYXJtIHRoZW4NCgkJCWlmIFZhbGlkVGFyZ2V0KG1pbmlvbikgYW5kIEdldERpc3RhbmNlKG1pbmlvbikgPD0gd1JhbmdlIGFuZCBDSEVDS1MuVyBhbmQgZ2V0RG1nKCJXIiwgbWluaW9uLCBteUhlcm8pID4gbWluaW9uLmhlYWx0aCB0aGVuDQoJCQkJQ2FzdFNwZWxsKF9XKQ0KCQkJZW5kDQoJCWVuZA0KCWVuZA0KZW5kDQoNCmZ1bmN0aW9uIExhbmVDbGVhcigpDQoJbG9jYWwgY2xlYXJ0YXJnZXQgPSBuaWwNCgllbmVteU1pbmlvbnM6dXBkYXRlKCkNCglvdGhlck1pbmlvbnM6dXBkYXRlKCkNCglqdW5nbGVNaW5pb25zOnVwZGF0ZSgpDQoNCglmb3IgaSwgbWluaW9uIGluIGlwYWlycyhlbmVteU1pbmlvbnMub2JqZWN0cykgZG8NCgkJaWYgVmFsaWRUYXJnZXQobWluaW9uLCA2MDApIGFuZCAoY2xlYXJ0YXJnZXQgPT0gbmlsIG9yIG5vdCBWYWxpZFRhcmdldChjbGVhcnRhcmdldCkpIHRoZW4NCgkJCWNsZWFydGFyZ2V0ID0gbWluaW9uDQoJCWVuZA0KCWVuZA0KDQoJZm9yIGksIGp1bmdsZW1pbmlvbiBpbiBpcGFpcnMoanVuZ2xlTWluaW9ucy5vYmplY3RzKSBkbw0KCQlpZiBWYWxpZFRhcmdldChqdW5nbGVtaW5pb24sIDYwMCkgYW5kIChjbGVhcnRhcmdldCA9PSBuaWwgb3Igbm90IFZhbGlkVGFyZ2V0KGNsZWFydGFyZ2V0KSkgdGhlbg0KCQkJY2xlYXJ0YXJnZXQgPSBqdW5nbGVtaW5pb24NCgkJZW5kDQoJZW5kDQoNCglmb3IgaSwgb3RoZXJtaW5pb24gaW4gaXBhaXJzKG90aGVyTWluaW9ucy5vYmplY3RzKSBkbw0KCQlpZiBWYWxpZFRhcmdldChvdGhlcm1pbmlvbiwgNjAwKSBhbmQgKGNsZWFydGFyZ2V0ID09IG5pbCBvciBub3QgVmFsaWRUYXJnZXQoY2xlYXJ0YXJnZXQpKSB0aGVuDQoJCQljbGVhcnRhcmdldCA9IG90aGVybWluaW9uDQoJCWVuZA0KCWVuZA0KDQoJaWYgY2xlYXJ0YXJnZXQgfj0gbmlsIHRoZW4NCgkJaWYgTWVudS5MYW5lQ2xlYXIudXNlUSB0aGVuDQoJCQlDYXN0U3BlbGwoX1EsIGNsZWFydGFyZ2V0KQ0KCQllbmQNCg0KCQlpZiBNZW51LkxhbmVDbGVhci51c2VXIHRoZW4NCgkJCUNhc3RTcGVsbChfVywgY2xlYXJ0YXJnZXQpDQoJCWVuZA0KDQoJCWlmIE1lbnUuTGFuZUNsZWFyLnVzZUUgdGhlbg0KCQkJQ2FzdFNwZWxsKF9FLCBjbGVhcnRhcmdldCkNCgkJZW5kDQoJZW5kDQplbmQNCg0KZnVuY3Rpb24gT25DcmVhdGVPYmoob2JqKQ0KCWlmIG9iai52YWxpZCBhbmQgKHN0cmluZy5maW5kKG9iai5uYW1lLCAiV2FyZCIpIH49IG5pbCBvciBzdHJpbmcuZmluZChvYmoubmFtZSwgIldyaWdnbGUiKSB+PSBuaWwgb3Igc3RyaW5nLmZpbmQob2JqLm5hbWUsICJUcmlua2V0IikpIHRoZW4NCgkJdGFibGUuaW5zZXJ0KHdhcmRzVGFibGUsIG9iaikNCgllbmQNCmVuZA0KDQpmdW5jdGlvbiBPbkRlbGV0ZU9iaihvYmplY3QpDQoJaWYgb2JqIHRoZW4NCgkJZm9yIGksIHdhcmQgaW4gcGFpcnMod2FyZHNUYWJsZSkgZG8NCgkJCWlmIG5vdCB3YXJkLnZhbGlkIG9yIG9iai5uYW1lID09IHdhcmQubmFtZSB0aGVuDQoJCQkJdGFibGUucmVtb3ZlKHdhcmRzVGFibGUsIGkpDQoJCQllbmQNCgkJZW5kDQoJZW5kDQplbmQNCg0KZnVuY3Rpb24gV2FyZEp1bXAoeCwgeSwgZW5lbXkpDQoJaWYgR2V0RGlzdGFuY2UobW91c2VQb3MpIGFuZCBub3QgZW5lbXkgdGhlbg0KCQlsb2NhbCBtb3ZlVG9Qb3MgPSBteUhlcm8gKyAoVmVjdG9yKG1vdXNlUG9zKSAtIG15SGVybyk6bm9ybWFsaXplZCgpKjMwMA0KCQlteUhlcm86TW92ZVRvKG1vdmVUb1Bvcy54LCBtb3ZlVG9Qb3MueikNCgllbmQJDQoNCglpZiBDSEVDS1MuRSB0aGVuDQoJCWxvY2FsIEp1bXBlZCA9IGZhbHNlDQoJCWxvY2FsIFdhcmREaXN0YW5jZSA9IDMwMA0KDQoJCS0tQWxseSBqdW1wDQoJCWZvciBpLCBhbGx5IGluIGlwYWlycyhHZXRBbGx5SGVyb2VzKCkpIGRvDQoJCQlpZiBWYWxpZFRhcmdldChhbGx5LCBlUmFuZ2UsIGZhbHNlKSB0aGVuDQoJCQkJaWYgR2V0RGlzdGFuY2VTcXIoYWxseSwgbW91c2VQb3MpIDw9IFdhcmREaXN0YW5jZSpXYXJkRGlzdGFuY2UgdGhlbg0KCQkJCQlDYXN0U3BlbGwoX0UsIGFsbHkpDQoJCQkJCUp1bXBlZCA9IHRydWUNCgkJCQkJbGFzdEp1bXAgPSBHZXRUaWNrQ291bnQoKSArIDIwMDANCgkJCQllbmQNCgkJCWVuZA0KCQllbmQNCg0KCQktLSBNaW5pb25zIGp1bXANCgkJYWxseU1pbmlvbnM6dXBkYXRlKCkNCgkJZm9yIGksIG1pbmlvbiBpbiBwYWlycyhhbGx5TWluaW9ucy5vYmplY3RzKSBkbw0KCQkJaWYgVmFsaWRUYXJnZXQobWluaW9uLCBlUmFuZ2UsIGZhbHNlKSB0aGVuDQoJCQkJaWYgR2V0RGlzdGFuY2VTcXIobWluaW9uLCBtb3VzZVBvcykgPD0gV2FyZERpc3RhbmNlKldhcmREaXN0YW5jZSB0aGVuDQoJCQkJCUNhc3RTcGVsbChfRSwgbWluaW9uKQ0KCQkJCQlKdW1wZWQgPSB0cnVlDQoJCQkJCWxhc3RKdW1wID0gR2V0VGlja0NvdW50KCkgKyAyMDAwDQoJCQkJZW5kDQoJCQllbmQNCgkJZW5kDQoNCgkJLS0gV2FyZCBKdW1wDQoJCWZvciBpLCBteVdhcmQgaW4gcGFpcnMod2FyZHNUYWJsZSkgZG8NCgkJCWlmIEdldERpc3RhbmNlU3FyKG1vdXNlUG9zKSA8IDYwMCAqIDYwMCB0aGVuDQoJCQkJaWYgR2V0RGlzdGFuY2VTcXIobXlXYXJkLCBtb3VzZVBvcykgPCBXYXJkRGlzdGFuY2UqV2FyZERpc3RhbmNlIHRoZW4NCgkJCQkJQ2FzdFNwZWxsKF9FLCBteVdhcmQpDQoJCQkJCUp1bXBlZCA9IHRydWUNCgkJCQkJbGFzdEp1bXAgPSBHZXRUaWNrQ291bnQoKSArIDIwMDANCgkJCQllbmQNCgkJCWVsc2UNCgkJCQlpZiBHZXREaXN0YW5jZVNxcihteVdhcmQpIDwgZVJhbmdlICogZVJhbmdlIHRoZW4NCgkJCQkJQ2FzdFNwZWxsKF9FLCBteVdhcmQpDQoJCQkJZW5kDQoJCQllbmQNCgkJZW5kDQoNCgkJaWYgbm90IEp1bXBlZCBhbmQgR2V0VGlja0NvdW50KCkgPj0gbGFzdEp1bXAgdGhlbg0KCQkJbG9jYWwgU2xvdCA9IEdldFdhcmRTbG90KCkNCgkJCWlmIFNsb3Qgfj0gbmlsIHRoZW4NCgkJCQlDYXN0U3BlbGwoU2xvdCwgeCwgeSkNCgkJCQlKdW1wZWQgPSB0cnVlDQoJCQkJbGFzdEp1bXAgPSBHZXRUaWNrQ291bnQoKSArIDIwMDANCgkJCWVuZA0KCQllbmQNCgllbmQNCmVuZA0KDQpmdW5jdGlvbiBHZXRXYXJkU2xvdCgpDQoJLS0gR2V0cyBTbG90IG9mIEF2YWlsYWJsZSBXYXJkcyAtLQ0KCWxvY2FsIGZ1bmN0aW9uIGdldFJlYWR5U2xvdChpdGVtTmFtZSkNCgkJZm9yIHNsb3QgPSA2LCAxMiBkbw0KCQkJaWYgc3RyaW5nLmxvd2VyKG15SGVybzpHZXRTcGVsbERhdGEoc2xvdCkubmFtZSkgPT0gaXRlbU5hbWUgYW5kIG15SGVybzpDYW5Vc2VTcGVsbChzbG90KSB0aGVuDQoJCQkJcmV0dXJuIHNsb3QNCgkJCWVuZA0KCQllbmQNCgkJcmV0dXJuIG5pbA0KCWVuZA0KDQoJLS0gV2FyZCBQcmlvcml0aWVzIC0tDQoJaWYgZ2V0UmVhZHlTbG90KHdhcmRzLlRyaW5rZXQxKSB+PSBuaWwgdGhlbg0KCQlyZXR1cm4gZ2V0UmVhZHlTbG90KHdhcmRzLlRyaW5rZXQxKQ0KCWVsc2VpZiBnZXRSZWFkeVNsb3Qod2FyZHMuVHJpbmtldDIpIH49IG5pbCB0aGVuDQoJCXJldHVybiBnZXRSZWFkeVNsb3Qod2FyZHMuVHJpbmtldDIpDQoJZWxzZWlmIGdldFJlYWR5U2xvdCh3YXJkcy5Ucmlua2V0Mykgfj0gbmlsIHRoZW4NCgkJcmV0dXJuIGdldFJlYWR5U2xvdCh3YXJkcy5Ucmlua2V0MykNCgllbHNlaWYgZ2V0UmVhZHlTbG90KHdhcmRzLlRyaW5rZXQ0KSB+PSBuaWwgdGhlbg0KCQlyZXR1cm4gZ2V0UmVhZHlTbG90KHdhcmRzLlRyaW5rZXQ0KQ0KCWVsc2VpZiBnZXRSZWFkeVNsb3Qod2FyZHMuU2lnaHRXYXJkKSB+PSBuaWwgdGhlbg0KCQlyZXR1cm4gZ2V0UmVhZHlTbG90KHdhcmRzLlNpZ2h0V2FyZCkNCgllbHNlaWYgZ2V0UmVhZHlTbG90KHdhcmRzLlZpc2lvbldhcmQpIH49IG5pbCB0aGVuDQoJCXJldHVybiBnZXRSZWFkeVNsb3Qod2FyZHMuVmlzaW9uV2FyZCkNCgllbHNlaWYgZ2V0UmVhZHlTbG90KHdhcmRzLlNpZ2h0U3RvbmUpIH49IG5pbCB0aGVuDQoJCXJldHVybiBnZXRSZWFkeVNsb3Qod2FyZHMuU2lnaHRTdG9uZSkNCgllbmQNCg0KCXJldHVybiBuaWwNCmVuZA0KDQpmdW5jdGlvbiBDaGVja1pob255YSgpDQoJaWYgTWVudS5NaXNjLkl0ZW1zLnVzZVpob255YSB0aGVuDQoJCWlmIElURU1TLnpob255YXJlYWR5IGFuZCAoKG15SGVyby5oZWFsdGgvbXlIZXJvLm1heEhlYWx0aCkqMTAwKSA8PSBNZW51Lk1pc2MuSXRlbXMuemhvbnlhSHAgdGhlbg0KCQkJQ2FzdFNwZWxsKElURU1TLnpob255YXNsb3QpDQoJCWVuZA0KCWVuZA0KZW5k"), nil, "bt", _ENV))()
+	Changelog!
+	Version: 1.1
+		* Added Ward Jump (Credits to Skeem).
+		* Add auto Zhonyas.
+		* Rewaork ignite.
+
+	Version: 1.0
+		* Costomizable Key Settings.
+		* Costomizable Harass, use Q, W, E.
+		* Customizable Full combo. change "QEWR", "EQWR.
+		* Customizable KS settings using skills and ignite.
+		* Customizable farm with Q, W.
+]]-- 
+
+if myHero.charName ~= "Katarina" then
+	return
+end
+
+-- Info
+local version = 1.1
+
+-- Ult Helper
+local ULT = {
+	using  = false,
+	last = 0
+}
+
+-- Ranges
+local wRange = 375
+local eRange = 700
+local qRange = 675
+local rRange = 550
+
+-- Ignite
+local ignite = nil
+
+-- Ward Jump by Skeem
+local lastJump = 0
+local wards = {
+	SightStone = "itemghostward",
+	SightWard = "sightward",
+	VisionWard = "visionward",
+	Trinket1 = "trinkettotemlvl1",
+	Trinket2 = "trinkettotemlvl2",
+	Trinket3 = "trinkettotemlvl3",
+	Trinket4 = "trinkettotemlvl3b"
+}
+
+-- Using Items
+local ITEMS = {
+	zhonyaslot = nil,
+	zhonyaready = false
+}
+
+-- Checks
+local CHECKS = {
+	Q = false,
+	W = false,
+	E = false,
+	R = false
+}
+
+local UPDATE_HOST = "raw.githubusercontent.com"
+local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Katarina.lua".."?rand="..math.random(1,10000)
+local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
+local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
+
+function InfoMessage(msg)
+	print("<font color=\"#6699ff\"><b>Challengers Katarina:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
+end
+
+local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Katarina.version")
+
+if ServerData then
+	ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
+	if ServerVersion then
+		if tonumber(version) < ServerVersion then
+			InfoMessage("New version available ("..ServerVersion..")")
+			InfoMessage("Updating, please don't press F9")
+			DelayAction(function() DownloadFile(UPDATE_URL, UPDATE_FILE_PATH, function () InfoMessage("Successfully updated. ("..version.." => "..ServerVersion.."), press F9 twice to load the updated version.") end) end, 3)
+		else
+			InfoMessage("You have got the latest version ("..ServerVersion..")")
+		end
+	end
+else
+	InfoMessage("Error downloading version info")
+end
+
+function OnLoad()
+	-- Load Menu
+	Menu = scriptConfig("Challengers Katarina", "Katarina")
+
+	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
+		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
+		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("M"))
+		Menu.Keys:addParam("farmKey", "Farm On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("N"))
+		Menu.Keys:addParam("clearKey", "Lane Clear On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("L"))
+
+	Menu:addSubMenu("["..myHero.charName.."] - Harass Settings", "Haras")
+		Menu.Haras:addParam("useQHarass", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Haras:addParam("useWHarass", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
+		Menu.Haras:addParam("useEHarass", "Use (E)", SCRIPT_PARAM_ONOFF, true)
+
+	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
+		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Combo:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
+		Menu.Combo:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Combo:addParam("useIgnite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
+		Menu.Combo:addSubMenu("["..myHero.charName.."] - Ultimate Settings", "ultimate") 
+			Menu.Combo.ultimate:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
+			Menu.Combo.ultimate:addParam("stopclick",  "Stop (R) With Right Click", SCRIPT_PARAM_ONOFF, false)
+			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"QEWR", "EQWR"})
+
+	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
+		Menu.KS:addParam("ksWithQ", "KS with (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.KS:addParam("ksWithW", "KS with (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.KS:addParam("ksWithE", "KS with (E)", SCRIPT_PARAM_ONOFF, true)
+
+	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
+		Menu.Farm:addParam("useQFarm", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Farm:addParam("useWFarm", "Use (W)", SCRIPT_PARAM_ONOFF, true)
+
+	Menu:addSubMenu("["..myHero.charName.."] - Lane Clear Settings", "LaneClear")
+		Menu.LaneClear:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.LaneClear:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
+
+	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
+		Menu.Misc:addSubMenu("["..myHero.charName.."] - Ward Jump Settings", "WardJump") 
+			Menu.Misc.WardJump:addParam('wardjumpKey', 'Ward Jump Key',  SCRIPT_PARAM_ONKEYDOWN, false, string.byte("H"))
+			Menu.Misc.WardJump:addParam("maxjump", "Always Ward Jump at Max Range", SCRIPT_PARAM_ONOFF, true)
+		Menu.Misc:addSubMenu("["..myHero.charName.."] - Items Settings", "Items") 
+			Menu.Misc.Items:addParam("useZhonya", "Use Zhonya", SCRIPT_PARAM_ONOFF, true)
+			Menu.Misc.Items:addParam("zhonyaHp", "% hp to Zhonya", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
+
+	-- Perma Shows
+	Menu.Keys:permaShow("comboKey")
+	Menu.Keys:permaShow("harassKey")
+	Menu.Keys:permaShow("clearKey")
+	Menu.Keys:permaShow("farmKey")
+
+	-- Target Selector
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, eRange)
+	ts.name = "Katarina"
+	Menu:addTS(ts)
+
+	-- Minions
+	enemyMinions = minionManager(MINION_ENEMY, eRange, myHero, MINION_SORT_MAXHEALTH_DEC)
+	allyMinions = minionManager(MINION_ALLY, eRange, myHero, MINION_SORT_MAXHEALTH_DEC)
+	jungleMinions = minionManager(MINION_JUNGLE, eRange, myHero, MINION_SORT_MAXHEALTH_DEC)
+	otherMinions = minionManager(MINION_OTHER, eRange, myHero, MINION_SORT_MAXHEALTH_DEC)
+
+	-- Ignite check
+	ignite = myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") and SUMMONER_1 or myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") and SUMMONER_2 or nil
+
+	-- Override Globals Credits to Aroc :3
+	_G.myHero.SaveMove = _G.myHero.MoveTo
+	_G.myHero.SaveAttack = _G.myHero.Attack
+	_G.myHero.MoveTo = function(...) if not ULT.using then _G.myHero.SaveMove(...) end end
+	_G.myHero.Attack = function(...) if not ULT.using then _G.myHero.SaveAttack(...) end end
+
+	-- Wards
+	wardsTable = {}
+	for i = 0, objManager.maxObjects do
+		local obj = objManager:getObject(i)
+		if obj and obj.valid and (string.find(obj.name, "Ward") ~= nil or string.find(obj.name, "Wriggle") ~= nil or string.find(obj.name, "Trinket")) then
+			table.insert(wardsTable, obj)
+		end
+	end
+
+	InfoMessage("Version: ".. version .. " loaded!")
+end
+
+function OnTick()
+	Checks()
+
+	if Menu.Misc.Items.useZhonya then
+		CheckZhonya()
+	end
+
+	if Menu.Keys.comboKey then
+		Combo()
+		return
+	end
+
+	if Menu.Keys.harassKey then
+		Harass()
+		return
+	end
+
+	if Menu.Keys.farmKey then
+		Farm()
+	end
+
+	if Menu.Keys.clearKey then
+		LaneClear()
+	end
+
+	if Menu.Misc.WardJump.wardjumpKey then
+    		local WardPos = (GetDistanceSqr(mousePos) <= 600 * 600 and mousePos) or (Menu.Misc.WardJump.maxjump and myHero + (Vector(mousePos) - myHero):normalized()*590)
+		if WardPos then
+			WardJump(WardPos.x, WardPos.z)
+		end
+	end
+
+	if Menu.Combo.useIgnite and ignite ~= nil then
+		AutoIgnite()
+	end
+end
+
+function Checks()
+	ts:update()
+	target = ts.target
+
+	CHECKS.Q = (myHero:CanUseSpell(_Q) == READY)
+	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
+	CHECKS.E = (myHero:CanUseSpell(_E) == READY)
+	CHECKS.R = (myHero:CanUseSpell(_R) == READY)
+
+	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
+	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
+
+	if ULT.using then
+		if (os.clock() - ULT.last) > 2.5 then
+			ULT.using = false
+			ULT.last  = 0
+		end
+	end
+end
+
+function Combo()
+	if ValidTarget(target) then
+		if Menu.Combo.ultimate.ultMode == 1 then
+			if CHECKS.Q and Menu.Combo.useQ then 
+				if GetDistance(target) <= qRange then
+					CastSpell(_Q, target) 
+				end
+			end
+
+			if CHECKS.E and Menu.Combo.useE then
+				if GetDistance(target) <= eRange then
+					CastSpell(_E, target)
+				end
+			end
+
+
+			if CHECKS.W and Menu.Combo.useW then
+				if GetDistance(target) <= wRange then
+					CastSpell(_W)
+				end
+			end
+
+			if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR then
+				if GetDistance(target) <= rRange then
+					CastSpell(_R)
+				end
+			end
+		elseif Menu.Combo.ultimate.ultMode == 2 then
+			if CHECKS.E and Menu.Combo.useE then
+				if GetDistance(target) <= eRange then
+					CastSpell(_E, target)
+				end
+			end
+
+			if CHECKS.Q and Menu.Combo.useQ then 
+				if GetDistance(target) <= qRange then
+					CastSpell(_Q, target)
+				end
+			end
+
+			if CHECKS.W and Menu.Combo.useW then
+				if GetDistance(target) <= wRange then
+					CastSpell(_W)
+				end
+			end
+
+			if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR then
+				if GetDistance(target) <= rRange then
+					CastSpell(_R)
+				end
+			end
+		end
+	end
+end
+
+function OnWndMsg(msg, key)
+	if Menu.Combo.ultimate.stopclick then
+		if msg == WM_RBUTTONDOWN and ULT.using then 
+			ULT.using = false
+		end
+	end
+end
+
+
+function OnProcessSpell(obj, spell)
+	if myHero.dead then
+		return
+	end
+	
+	if obj == myHero then
+		if spell.name == "spell4" then
+			ULT.using = true
+			ULT.last  = os.clock()
+		end
+	end
+end
+
+function OnRemoveBuff(unit, buff)
+	if unit.isMe and buff.name == "katarinarsound" then
+		ULT.using = false
+		ULT.last  = 0
+	end
+end
+
+function AutoIgnite()
+	if myHero:CanUseSpell(ignite) == READY then
+		for i, enemy in ipairs(GetEnemyHeroes()) do
+			if ValidTarget(enemy, 600) and enemy.health <= getDmg('IGNITE', enemy, myHero) then
+				CastSpell(ignite, enemy)
+			end
+		end
+	end 
+end
+
+function KillSteal()
+	for i, enemy in ipairs(GetEnemyHeroes()) do
+		if ValidTarget(enemy) and GetDistance(enemy) < 700 then
+			if Menu.KS.ksWithQ then
+				if CHECKS.Q and getDmg("Q", enemy, myHero) > enemy.health then
+					CastSpell(_Q, enemy)
+				end
+			end
+
+			if Menu.KS.ksWithW then
+				if CHECKS.W and getDmg("W", enemy, myHero) > enemy.health then
+					CastSpell(_W)
+				end
+			end
+			
+			if Menu.KS.ksWithE then
+				if CHECKS.E and getDmg("E", enemy, myHero) > enemy.health then
+					CastSpell(_E, enemy)
+				end
+			end
+		end
+	end
+end
+
+function Harass()
+	if not target then
+		return
+	end
+
+	if ValidTarget(target) then
+		if CHECKS.E and Menu.Haras.useEHarass then
+			if GetDistance(target) <= eRange then
+				CastSpell(_E, target)
+			end
+		end
+
+		if CHECKS.Q and Menu.Haras.useQHarass then 
+			if GetDistance(target) <= qRange then
+				CastSpell(_Q, target) 
+			end
+		end
+
+		if CHECKS.W and Menu.Haras.useWHarass then
+			if GetDistance(target) <= wRange then
+				CastSpell(_W)
+			end
+		end
+	end
+end
+
+function Farm()
+	enemyMinions:update()
+	for i, minion in ipairs(enemyMinions.objects) do
+		if Menu.Farm.useQFarm then
+			if ValidTarget(minion) and GetDistance(minion) <= qRange and CHECKS.Q and getDmg("Q", minion, myHero) > minion.health then
+				CastSpell(_Q, minion)
+			end
+		end
+	end
+	
+	for i, minion in ipairs(enemyMinions.objects) do
+		if Menu.Farm.useWFarm then
+			if ValidTarget(minion) and GetDistance(minion) <= wRange and CHECKS.W and getDmg("W", minion, myHero) > minion.health then
+				CastSpell(_W)
+			end
+		end
+	end
+end
+
+function LaneClear()
+	local cleartarget = nil
+	enemyMinions:update()
+	otherMinions:update()
+	jungleMinions:update()
+
+	for i, minion in ipairs(enemyMinions.objects) do
+		if ValidTarget(minion, 600) and (cleartarget == nil or not ValidTarget(cleartarget)) then
+			cleartarget = minion
+		end
+	end
+
+	for i, jungleminion in ipairs(jungleMinions.objects) do
+		if ValidTarget(jungleminion, 600) and (cleartarget == nil or not ValidTarget(cleartarget)) then
+			cleartarget = jungleminion
+		end
+	end
+
+	for i, otherminion in ipairs(otherMinions.objects) do
+		if ValidTarget(otherminion, 600) and (cleartarget == nil or not ValidTarget(cleartarget)) then
+			cleartarget = otherminion
+		end
+	end
+
+	if cleartarget ~= nil then
+		if Menu.LaneClear.useQ then
+			CastSpell(_Q, cleartarget)
+		end
+
+		if Menu.LaneClear.useW then
+			CastSpell(_W, cleartarget)
+		end
+
+		if Menu.LaneClear.useE then
+			CastSpell(_E, cleartarget)
+		end
+	end
+end
+
+function OnCreateObj(obj)
+	if obj.valid and (string.find(obj.name, "Ward") ~= nil or string.find(obj.name, "Wriggle") ~= nil or string.find(obj.name, "Trinket")) then
+		table.insert(wardsTable, obj)
+	end
+end
+
+function OnDeleteObj(object)
+	if obj then
+		for i, ward in pairs(wardsTable) do
+			if not ward.valid or obj.name == ward.name then
+				table.remove(wardsTable, i)
+			end
+		end
+	end
+end
+
+function WardJump(x, y, enemy)
+	if GetDistance(mousePos) and not enemy then
+		local moveToPos = myHero + (Vector(mousePos) - myHero):normalized()*300
+		myHero:MoveTo(moveToPos.x, moveToPos.z)
+	end	
+
+	if CHECKS.E then
+		local Jumped = false
+		local WardDistance = 300
+
+		--Ally jump
+		for i, ally in ipairs(GetAllyHeroes()) do
+			if ValidTarget(ally, eRange, false) then
+				if GetDistanceSqr(ally, mousePos) <= WardDistance*WardDistance then
+					CastSpell(_E, ally)
+					Jumped = true
+					lastJump = GetTickCount() + 2000
+				end
+			end
+		end
+
+		-- Minions jump
+		allyMinions:update()
+		for i, minion in pairs(allyMinions.objects) do
+			if ValidTarget(minion, eRange, false) then
+				if GetDistanceSqr(minion, mousePos) <= WardDistance*WardDistance then
+					CastSpell(_E, minion)
+					Jumped = true
+					lastJump = GetTickCount() + 2000
+				end
+			end
+		end
+
+		-- Ward Jump
+		for i, myWard in pairs(wardsTable) do
+			if GetDistanceSqr(mousePos) < 600 * 600 then
+				if GetDistanceSqr(myWard, mousePos) < WardDistance*WardDistance then
+					CastSpell(_E, myWard)
+					Jumped = true
+					lastJump = GetTickCount() + 2000
+				end
+			else
+				if GetDistanceSqr(myWard) < eRange * eRange then
+					CastSpell(_E, myWard)
+				end
+			end
+		end
+
+		if not Jumped and GetTickCount() >= lastJump then
+			local Slot = GetWardSlot()
+			if Slot ~= nil then
+				CastSpell(Slot, x, y)
+				Jumped = true
+				lastJump = GetTickCount() + 2000
+			end
+		end
+	end
+end
+
+function GetWardSlot()
+	-- Gets Slot of Available Wards --
+	local function getReadySlot(itemName)
+		for slot = 6, 12 do
+			if string.lower(myHero:GetSpellData(slot).name) == itemName and myHero:CanUseSpell(slot) then
+				return slot
+			end
+		end
+		return nil
+	end
+
+	-- Ward Priorities --
+	if getReadySlot(wards.Trinket1) ~= nil then
+		return getReadySlot(wards.Trinket1)
+	elseif getReadySlot(wards.Trinket2) ~= nil then
+		return getReadySlot(wards.Trinket2)
+	elseif getReadySlot(wards.Trinket3) ~= nil then
+		return getReadySlot(wards.Trinket3)
+	elseif getReadySlot(wards.Trinket4) ~= nil then
+		return getReadySlot(wards.Trinket4)
+	elseif getReadySlot(wards.SightWard) ~= nil then
+		return getReadySlot(wards.SightWard)
+	elseif getReadySlot(wards.VisionWard) ~= nil then
+		return getReadySlot(wards.VisionWard)
+	elseif getReadySlot(wards.SightStone) ~= nil then
+		return getReadySlot(wards.SightStone)
+	end
+
+	return nil
+end
+
+function CheckZhonya()
+	if Menu.Misc.Items.useZhonya then
+		if ITEMS.zhonyaready and ((myHero.health/myHero.maxHealth)*100) <= Menu.Misc.Items.zhonyaHp then
+			CastSpell(ITEMS.zhonyaslot)
+		end
+	end
+end
