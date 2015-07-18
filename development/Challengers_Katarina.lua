@@ -14,11 +14,14 @@
 		* Fix kill steal usage.
 		* More checks for safe combo and kill steal.
 		* Fix ignite not working properlly.
+		* Add humanizer for "E".
+		* Add draw ranges for skills.
+		* Add priority table for TS.
 
 	Version: 1.1
 		* Added Ward Jump (Credits to Skeem).
 		* Add auto Zhonyas.
-		* Rewaork ignite.
+		* Rework ignite.
 
 	Version: 1.0
 		* Costomizable Key Settings.
@@ -44,7 +47,7 @@ local ULT = {
 -- Ranges
 local RANGE = {
 	Q = 675,
-	W = 735,
+	W = 385,
 	E = 700,
 	R = 550
 }
@@ -79,6 +82,11 @@ local CHECKS = {
 	I = false
 }
 
+-- Humanizer
+local HUMANIZER = {
+	E = {last = 0, delay = 0, canuse = true}
+}
+
 local UPDATE_HOST = "raw.githubusercontent.com"
 local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Katarina.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
@@ -104,6 +112,33 @@ if ServerData then
 else
 	InfoMessage("Error downloading version info")
 end
+
+local priorityTable = {
+	AP = {
+		"Annie", "Ahri", "Akali", "Anivia", "Annie", "Brand", "Cassiopeia", "Diana", "Ekko", "Evelynn", "FiddleSticks", "Fizz", "Gragas", "Heimerdinger", "Karthus",
+		"Kassadin", "Katarina", "Kayle", "Kennen", "Leblanc", "Lissandra", "Lux", "Malzahar", "Mordekaiser", "Morgana", "Nidalee", "Orianna",
+		"Ryze", "Sion", "Swain", "Syndra", "Teemo", "TwistedFate", "Veigar", "Viktor", "Vladimir", "Xerath", "Ziggs", "Zyra", "Velkoz"
+	},
+			
+	Support = {
+		"Alistar", "Blitzcrank", "Janna", "Karma", "Leona", "Lulu", "Nami", "Nunu", "Sona", "Soraka", "Taric", "Thresh", "Zilean", "Braum"
+	},
+			
+	Tank = {
+		"Amumu", "Chogath", "DrMundo", "Galio", "Hecarim", "Malphite", "Maokai", "Nasus", "Rammus", "Sejuani", "Nautilus", "Shen", "Singed", "Skarner", "Volibear",
+		"Warwick", "Yorick", "Zac"
+	},
+			
+	AD_Carry = {
+		"Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jayce", "Jinx", "KogMaw", "Lucian", "MasterYi", "MissFortune", "Pantheon", "Quinn", "Shaco", "Sivir",
+		"Talon","Tryndamere", "Tristana", "Twitch", "Urgot", "Varus", "Vayne", "Yasuo", "Zed"
+	},
+			
+	Bruiser = {
+		"Aatrox", "Darius", "Elise", "Fiora", "Gangplank", "Garen", "Irelia", "JarvanIV", "Jax", "Khazix", "LeeSin", "Nocturne", "Olaf", "Poppy",
+		"Renekton", "Rengar", "Riven", "Rumble", "Shyvana", "Trundle", "Udyr", "Vi", "MonkeyKing", "XinZhao"
+	}
+}
 
 function OnLoad()
 	-- Load Menu
@@ -145,12 +180,18 @@ function OnLoad()
 		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
+		Menu.Misc:addParam("humanizer", "Use Humanizer", SCRIPT_PARAM_ONOFF, true)
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Ward Jump Settings", "WardJump") 
 			Menu.Misc.WardJump:addParam('wardjumpKey', 'Ward Jump Key',  SCRIPT_PARAM_ONKEYDOWN, false, string.byte("H"))
 			Menu.Misc.WardJump:addParam("maxjump", "Always Ward Jump at Max Range", SCRIPT_PARAM_ONOFF, true)
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Items Settings", "Items") 
 			Menu.Misc.Items:addParam("useZhonya", "Use Zhonya", SCRIPT_PARAM_ONOFF, true)
 			Menu.Misc.Items:addParam("zhonyaHp", "% hp to Zhonya", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
+
+	Menu:addSubMenu("["..myHero.charName.."] - Draw Settings", "Draw")
+		Menu.Draw:addParam("drawQ", "Draw (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Draw:addParam("drawW", "Draw (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Draw:addParam("drawE", "Draw (E)", SCRIPT_PARAM_ONOFF, true)
 
 	-- Perma Shows
 	Menu.Keys:permaShow("comboKey")
@@ -159,8 +200,9 @@ function OnLoad()
 	Menu.Keys:permaShow("farmKey")
 
 	-- Target Selector
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E)
-	ts.name = "Katarina"
+	SetTablePriorities()
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E, DAMAGE_MAGIC, true)
+	ts.name = "[Katarina]"
 	Menu:addTS(ts)
 
 	-- Minions
@@ -175,6 +217,9 @@ function OnLoad()
 	elseif myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") then
     		ignite = SUMMONER_2
 	end
+
+	-- Callback Binds
+	AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
 
 	-- Override Globals Credits to Aroc :3
 	_G.myHero.SaveMove = _G.myHero.MoveTo
@@ -196,19 +241,16 @@ end
 
 function OnTick()
 	Checks()
-
 	if Menu.Misc.Items.useZhonya then
 		CheckZhonya()
 	end
 
 	if Menu.Keys.comboKey then
 		Combo()
-		return
 	end
 
 	if Menu.Keys.harassKey then
 		Harass()
-		return
 	end
 
 	if Menu.Keys.farmKey then
@@ -226,9 +268,7 @@ function OnTick()
 		end
 	end
 
-	if Menu.Combo.useIgnite then
-		AutoIgnite()
-	end
+	KillSteal()
 end
 
 function Checks()
@@ -244,14 +284,18 @@ function Checks()
 	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
 	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
 
+	if not HUMANIZER.E.canuse then
+		if (os.clock() - HUMANIZER.E.last) > HUMANIZER.E.delay then
+			HUMANIZER.E.canuse = true
+		end
+	end
+
 	if ULT.using then
 		if (os.clock() - ULT.last) > 2.5 then
 			ULT.using = false
 			ULT.last  = 0
 		end
 	end
-
-	KillSteal()
 end
 
 function Combo()
@@ -318,17 +362,23 @@ function OnWndMsg(msg, key)
 	end
 end
 
+function random(min, max, precision)
+	local precision = precision or 0
+	local num = math.random()
+	local range = math.abs(max - min)
+	local offset = range * num
+	local randomnum = min + offset
+	return math.floor(randomnum * math.pow(10, precision) + 0.5) / math.pow(10, precision)
+end
 
-function OnProcessSpell(obj, spell)
-	if myHero.dead then
-		return
-	end
-	
-	if obj == myHero then
-		if spell.name == "spell4" then
-			ULT.using = true
-			ULT.last  = os.clock()
-		end
+function OnCastSpell(iSpell,startPos,endPos,targetUnit)
+	if iSpell == 4 then
+		ULT.using = true
+		ULT.last  = os.clock()
+		elseif  Menu.Misc.humanizer and iSpell == 3 then
+			HUMANIZER.E.last   = os.clock()
+			HUMANIZER.E.delay  = random(0, 1.5, 2)
+			HUMANIZER.E.canuse = false
 	end
 end
 
@@ -339,21 +389,21 @@ function OnRemoveBuff(unit, buff)
 	end
 end
 
-function AutoIgnite()
-	for i, enemy in ipairs(GetEnemyHeroes()) do
-		if CHECKS.I and ValidTarget(enemy, 600) and enemy.health <= getDmg('IGNITE', enemy, myHero) then
-			CastSpell(ignite, enemy)
+function AutoIgnite(unit)
+	if ValidTarget(unit, 600) and unit.health <= 50 + (20 * myHero.level) then
+		if CHECKS.I then
+			CastSpell(ignite, unit)
 		end
 	end
 end
 
 function KillSteal()
-	if myHero.dead and not target then
+	if myHero.dead then
 		return
 	end
 
 	for i, enemy in ipairs(GetEnemyHeroes()) do
-		if ValidTarget(enemy) and GetDistance(enemy) < 700 then
+		if ValidTarget(enemy) and enemy.visible then
 			if Menu.KS.useQ then
 				if CHECKS.Q and getDmg("Q", enemy, myHero) > enemy.health then
 					CastSpell(_Q, enemy)
@@ -370,6 +420,10 @@ function KillSteal()
 				if CHECKS.E and getDmg("E", enemy, myHero) > enemy.health then
 					CastSpell(_E, enemy)
 				end
+			end
+
+			if Menu.Combo.useIgnite then
+				AutoIgnite(enemy)
 			end
 		end
 	end
@@ -571,4 +625,84 @@ function CheckZhonya()
 			CastSpell(ITEMS.zhonyaslot)
 		end
 	end
+end
+
+
+function SetTablePriorities()
+	local table = GetEnemyHeroes()
+	if #table == 5 then
+		for i, enemy in ipairs(table) do
+			SetPriority(priorityTable.AD_Carry, enemy, 1)
+			SetPriority(priorityTable.AP, enemy, 2)
+			SetPriority(priorityTable.Support, enemy, 3)
+			SetPriority(priorityTable.Bruiser, enemy, 4)
+			SetPriority(priorityTable.Tank, enemy, 5)
+		end
+	elseif #table == 3 then
+		for i, enemy in ipairs(table) do
+			SetPriority(priorityTable.AD_Carry, enemy, 1)
+			SetPriority(priorityTable.AP, enemy, 1)
+			SetPriority(priorityTable.Support, enemy, 2)
+			SetPriority(priorityTable.Bruiser, enemy, 2)
+			SetPriority(priorityTable.Tank, enemy, 3)
+		end
+	else
+		InfoMessage("Too few champions to arrange priority!")
+	end
+end
+
+function SetPriority(table, hero, priority)
+	for i = 1, #table do
+		if hero.charName:find(table[i]) ~= nil then
+			TS_SetHeroPriority(priority, hero.charName)
+		end
+	end
+end
+
+function Round(number)
+	if number >= 0 then 
+		return math.floor(number+.5) 
+	else 
+		return math.ceil(number-.5) 
+	end
+end
+
+function DrawCircle(x, y, z, radius, color)
+	local vPos1 = Vector(x, y, z)
+	local vPos2 = Vector(cameraPos.x, cameraPos.y, cameraPos.z)
+	local tPos = vPos1 - (vPos1 - vPos2):normalized() * radius
+	local sPos = WorldToScreen(D3DXVECTOR3(tPos.x, tPos.y, tPos.z))
+		
+	if OnScreen({ x = sPos.x, y = sPos.y }, { x = sPos.x, y = sPos.y }) then
+		DrawCircleNextLvl(x, y, z, radius, 1, color, 300) 
+	end
+end
+
+function DrawCircleNextLvl(x, y, z, radius, width, color, chordlength)
+	radius = radius or 300
+	quality = math.max(8, Round(180 / math.deg((math.asin((chordlength / (2 * radius)))))))
+	quality = 2 * math.pi / quality
+	radius = radius * .92
+	local points = {}
+		
+	for theta = 0, 2 * math.pi + quality, quality do
+		local c = WorldToScreen(D3DXVECTOR3(x + radius * math.cos(theta), y, z - radius * math.sin(theta)))
+		points[#points + 1] = D3DXVECTOR2(c.x, c.y)
+	end
+	DrawLines2(points, width or 1, color or 4294967295)
+end
+
+function OnDraw()
+	if Menu.Draw.drawQ and CHECKS.Q then
+		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.Q, ARGB(255, 51, 153, 255))
+	end
+
+	if Menu.Draw.drawW and CHECKS.W then
+		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.W, ARGB(255, 102, 178 , 0 ))
+	end
+
+	if Menu.Draw.drawE and CHECKS.E then
+		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.E, ARGB(255, 178, 0 , 0 ))
+	end
+
 end
