@@ -17,6 +17,7 @@
 		* Add humanizer for "E".
 		* Add draw ranges for skills.
 		* Add priority table for TS.
+		* Fix "E" range.
 
 	Version: 1.1
 		* Added Ward Jump (Credits to Skeem).
