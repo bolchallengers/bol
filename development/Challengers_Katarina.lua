@@ -17,7 +17,6 @@
 		* Add humanizer for "E".
 		* Add draw ranges for skills.
 		* Add priority table for TS.
-		* Fix "E" range.
 
 	Version: 1.1
 		* Added Ward Jump (Credits to Skeem).
@@ -85,7 +84,11 @@ local CHECKS = {
 
 -- Humanizer
 local HUMANIZER = {
-	E = {last = 0, delay = 0, canuse = true}
+	E = {
+		last = 0,
+		delay = 0,
+		canuse = true
+	}
 }
 
 local UPDATE_HOST = "raw.githubusercontent.com"
@@ -201,10 +204,10 @@ function OnLoad()
 	Menu.Keys:permaShow("farmKey")
 
 	-- Target Selector
-	SetTablePriorities()
 	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E, DAMAGE_MAGIC, true)
 	ts.name = "[Katarina]"
 	Menu:addTS(ts)
+	SetTablePriorities()
 
 	-- Minions
 	enemyMinions = minionManager(MINION_ENEMY, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
