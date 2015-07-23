@@ -72,7 +72,7 @@ local RANGE = {
 }
 
 -- Summoner Spells
-local SPELLS {
+local SPELLS = {
 	SMITE = {
 		slot = nil,
 		range = 500,
@@ -94,33 +94,6 @@ local CHECKS = {
 	R = false
 }
 
-local priorityTable = {
-	AP = {
-		"Annie", "Ahri", "Akali", "Anivia", "Annie", "Brand", "Cassiopeia", "Diana", "Ekko", "Evelynn", "FiddleSticks", "Fizz", "Gragas", "Heimerdinger", "Karthus",
-		"Kassadin", "Katarina", "Kayle", "Kennen", "Leblanc", "Lissandra", "Lux", "Malzahar", "Mordekaiser", "Morgana", "Nidalee", "Orianna",
-		"Ryze", "Sion", "Swain", "Syndra", "Teemo", "TwistedFate", "Veigar", "Viktor", "Vladimir", "Xerath", "Ziggs", "Zyra", "Velkoz"
-	},
-			
-	Support = {
-		"Alistar", "Blitzcrank", "Janna", "Karma", "Leona", "Lulu", "Nami", "Nunu", "Sona", "Soraka", "Taric", "Thresh", "Zilean", "Braum"
-	},
-			
-	Tank = {
-		"Amumu", "Chogath", "DrMundo", "Galio", "Hecarim", "Malphite", "Maokai", "Nasus", "Rammus", "Sejuani", "Nautilus", "Shen", "Singed", "Skarner", "Volibear",
-		"Warwick", "Yorick", "Zac"
-	},
-			
-	AD_Carry = {
-		"Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jayce", "Jinx", "KogMaw", "Lucian", "MasterYi", "MissFortune", "Pantheon", "Quinn", "Shaco", "Sivir",
-		"Talon","Tryndamere", "Tristana", "Twitch", "Urgot", "Varus", "Vayne", "Yasuo", "Zed"
-	},
-			
-	Bruiser = {
-		"Aatrox", "Darius", "Elise", "Fiora", "Gangplank", "Garen", "Irelia", "JarvanIV", "Jax", "Khazix", "LeeSin", "Nocturne", "Olaf", "Poppy",
-		"Renekton", "Rengar", "Riven", "Rumble", "Shyvana", "Trundle", "Udyr", "Vi", "MonkeyKing", "XinZhao"
-	}
-}
-
 -- Target selector
 local ts = nil
 
@@ -130,7 +103,7 @@ function OnLoad()
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 		Menu.Keys:addParam("clearKey", "Lane Clear On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("L"))
-		Menu.Keys:addParam("jungleKey", "Jungle Clear On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("J"))
+		Menu.Keys:addParam("jungleKey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("J"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
 		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -149,11 +122,11 @@ function OnLoad()
 		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Jungle clear Settings", "JungleSettings")
-		Menu.JungleSettings:addParam("useQ", "Use Q in 'Jungleclear'", SCRIPT_PARAM_ONOFF, true)
-		Menu.JungleSettings:addParam("useW", "Auto W in 'Jungleclear'", SCRIPT_PARAM_ONOFF, true)
-		Menu.JungleSettings:addParam("useE", "Use E in 'Jungleclear'", SCRIPT_PARAM_ONOFF, true)
+		Menu.JungleSettings:addParam("useQ", "Use Q in 'Jungle clear'", SCRIPT_PARAM_ONOFF, true)
+		Menu.JungleSettings:addParam("useW", "Auto W in 'Jungle clear'", SCRIPT_PARAM_ONOFF, true)
+		Menu.JungleSettings:addParam("useE", "Use E in 'Jungle clear'", SCRIPT_PARAM_ONOFF, true)
 		Menu.JungleSettings:addParam("finishSmite", "Finish with Smite", SCRIPT_PARAM_ONOFF, true)
-		Menu.JungleSettings:addParam("Steal", "Q-Smite Steal Dragon/Baron in 'LastHit'", SCRIPT_PARAM_ONOFF, true)
+		Menu.JungleSettings:addParam("steal", "Q-Smite Steal Dragon/Baron in 'LastHit'", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
 		Menu.Misc:addParam("ManaManager", "Do not use W under Mana %",SCRIPT_PARAM_SLICE, 40, 0, 100, 0)
@@ -175,7 +148,9 @@ function OnLoad()
 	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.Q, DAMAGE_MAGIC, true)
 	ts.name = "[Amumu]"
 	Menu:addTS(ts)
-	SetTablePriorities()
+
+	-- Load predict
+	VP = VPrediction()
 
 	-- Minions
 	enemyMinions = minionManager(MINION_ENEMY, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
@@ -207,10 +182,11 @@ function OnTick()
 
 	if Menu.Keys.jungleKey then
 		JungleClear()
-		if Menu.JungleSettings.Steal then
-			if SPELLS.SMITE.slot ~= nil then
-				JungleSteal()
-			end
+	end
+
+	if Menu.Keys.jungleKey and Menu.JungleSettings.steal then
+		if SPELLS.SMITE.slot ~= nil then
+			JungleSteal()
 		end
 	end
 
@@ -221,8 +197,6 @@ end
 function Checks()
 	ts:update()
 	target = ts.target
-
-	VARS.inRange = false
 
 	CHECKS.Q = (myHero:CanUseSpell(_Q) == READY)
 	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
@@ -235,6 +209,15 @@ function Checks()
 	if SPELLS.SMITE.slot ~= nil then
 		SPELLS.SMITE.ready = (myHero:CanUseSpell(SPELLS.SMITE.slot) == READY)
 	end
+end
+
+function ObjectInArea(range, objects)
+	for i, object in ipairs(objects) do
+		if ValidTarget(object, range) then
+			return true
+		end
+	end
+	return false
 end
 
 function CheckW()
@@ -259,7 +242,7 @@ function FinishDespair(uint)
 end
 
 function JungleSteal()
-	local target = nil
+	target = nil
 	for i, minion in pairs(jungleMinions.objects) do
 		if ValidTarget(minion) and minion.visible and minion.health > 0 and minion.charName:lower():find("dragon") then
 			target = minion
@@ -300,7 +283,7 @@ function JungleSteal()
 			return
 		end
 	end
-end
+
 
 function CheckBigMinion(minion)
 	if minion and ValidTarget(minion, RANGE.W) then
@@ -331,8 +314,8 @@ function Combo()
 		end
 	end
 
-	if CHECKS.W and Menu.Combo.useW and ValidTarget(target, RANGE.W) then
-		if GetDistance(target) <= RANGE.W and ObjectInArea(RANGE.W, GetEnemyHeroes()) then
+	if CHECKS.W and Menu.Combo.useW then
+		if ObjectInArea(RANGE.W, GetEnemyHeroes()) then
 			CheckW()
 		end
 	end
@@ -384,18 +367,18 @@ function KillSteal()
 end
 
 function LaneClear()
-	local cleartarget = nil
+	target = nil
 	enemyMinions:update()
 
 	for i, minion in ipairs(enemyMinions.objects) do
-		if ValidTarget(minion, 600) and (cleartarget == nil or not ValidTarget(cleartarget)) then
-			cleartarget = minion
+		if ValidTarget(minion, 600) and (target == nil or not ValidTarget(target)) then
+			target = minion
 		end
 	end
 
-	if cleartarget ~= nil then
+	if target ~= nil then
 		if Menu.LaneClear.useQ and CHECKS.Q then
-			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(cleartarget, 0.25, 80, RANGE.Q, 2000, myHero, true)
+			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
 			if HitChance >= 2 then
 				CastSpell(_Q, CastPosition.x, CastPosition.z)
 			end
@@ -406,28 +389,28 @@ function LaneClear()
 		end
 
 		if Menu.LaneClear.useE then
-			CastSpell(_E, cleartarget)
+			CastSpell(_E, target)
 		end
 	end
 end
 
 function JungleClear()
-	local cleartarget = nil
+	target = nil
 	jungleMinions:update()
 
 	 for i, minion in pairs(jungleMinions.objects) do
 		if ValidTarget(minion) and not minion.dead then
-			if cleartarget == nil then
-				cleartarget = minion
-			elseif GetDistance(minion) < GetDistance(cleartarget) then
-				cleartarget = minion
+			if target == nil then
+				target = minion
+			elseif GetDistance(minion) < GetDistance(target) then
+				target = minion
 			end
 		end
 	end
 
-	if cleartarget ~= nil then
+	if target ~= nil and ValidTarget(target) then
 		if Menu.JungleSettings.useQ then
-			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(cleartarget, 0.25, 80, RANGE.Q, 2000, myHero, true)
+			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
 			if HitChance >= 2 then
 				CastSpell(_Q, CastPosition.x, CastPosition.z)
 			end
@@ -438,12 +421,12 @@ function JungleClear()
 		end
 
 		if Menu.JungleSettings.useE and CHECKS.E then
-			CastSpell(_E, cleartarget)
+			CastSpell(_E, target)
 		end
 	end
 end
 
-function OnDeleteObj(object)
+function OnDeleteObj(obj)
 	if obj.name == "Despair_buf.troy" then
 		VARS.despair = false
 	end
@@ -457,37 +440,6 @@ function CheckZhonya()
 	end
 end
 
-function SetTablePriorities()
-	local table = GetEnemyHeroes()
-	if #table == 5 then
-		for i, enemy in ipairs(table) do
-			SetPriority(priorityTable.AD_Carry, enemy, 1)
-			SetPriority(priorityTable.AP, enemy, 2)
-			SetPriority(priorityTable.Support, enemy, 3)
-			SetPriority(priorityTable.Bruiser, enemy, 4)
-			SetPriority(priorityTable.Tank, enemy, 5)
-		end
-	elseif #table == 3 then
-		for i, enemy in ipairs(table) do
-			SetPriority(priorityTable.AD_Carry, enemy, 1)
-			SetPriority(priorityTable.AP, enemy, 1)
-			SetPriority(priorityTable.Support, enemy, 2)
-			SetPriority(priorityTable.Bruiser, enemy, 2)
-			SetPriority(priorityTable.Tank, enemy, 3)
-		end
-	else
-		InfoMessage("Too few champions to arrange priority!")
-	end
-end
-
-function SetPriority(table, hero, priority)
-	for i = 1, #table do
-		if hero.charName:find(table[i]) ~= nil then
-			TS_SetHeroPriority(priority, hero.charName)
-		end
-	end
-end
-
 function DrawCircle(x, y, z, radius, color)
 	local vPos1 = Vector(x, y, z)
 	local vPos2 = Vector(cameraPos.x, cameraPos.y, cameraPos.z)
@@ -496,6 +448,14 @@ function DrawCircle(x, y, z, radius, color)
 		
 	if OnScreen({ x = sPos.x, y = sPos.y }, { x = sPos.x, y = sPos.y }) then
 		DrawCircleNextLvl(x, y, z, radius, 1, color, 300) 
+	end
+end
+
+function Round(number)
+	if number >= 0 then 
+		return math.floor(number+.5) 
+	else 
+		return math.ceil(number-.5) 
 	end
 end
 
