@@ -32,7 +32,7 @@ if FileExist(LIB_PATH .. "/VPrediction.lua") then
 end
 
 -- Info
-local version = 1.0
+local version = 1.1
 
 -- Updater
 local UPDATE_HOST = "raw.githubusercontent.com"
