@@ -9,6 +9,9 @@
 	========================================================================
 
 	Changelog!
+	Version: 1.1
+		* Fix Smite damage function.
+
 	Version: 1.0
 		* Costomizable Key Settings.
 		* Customizable Full combo. With R if killable enemy.
@@ -241,6 +244,15 @@ function FinishDespair(uint)
 	end
 end
 
+function GetSmiteDamage()
+	if not SPELLS.SMITE.ready then
+		return 0
+	end
+
+	return math.max(20 * myHero.level + 370, 30 * myHero.level + 330, 40 * myHero.level + 240, 50 * myHero.level + 100)
+end
+
+
 function JungleSteal()
 	target = nil
 	for i, minion in pairs(jungleMinions.objects) do
@@ -258,7 +270,7 @@ function JungleSteal()
 		if CHECKS.Q then
 			qDmg = getDmg("Q", target, myHero) end
 			if SPELLS.SMITE.ready then
-				smiteDmg = GetSmiteDamage(SPELLS.SMITE.ready)
+				smiteDmg = GetSmiteDamage()
 			end
 			
 			totalDamage = smiteDmg + qDmg
