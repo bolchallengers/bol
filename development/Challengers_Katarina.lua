@@ -16,7 +16,6 @@
 		* Fix ignite not working properlly.
 		* Add humanizer for "E".
 		* Add draw ranges for skills.
-		* Add priority table for TS.
 
 	Version: 1.1
 		* Added Ward Jump (Credits to Skeem).
@@ -101,7 +100,6 @@ function InfoMessage(msg)
 end
 
 local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Katarina.version")
-
 if ServerData then
 	ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
 	if ServerVersion then
@@ -117,37 +115,9 @@ else
 	InfoMessage("Error downloading version info")
 end
 
-local priorityTable = {
-	AP = {
-		"Annie", "Ahri", "Akali", "Anivia", "Annie", "Brand", "Cassiopeia", "Diana", "Ekko", "Evelynn", "FiddleSticks", "Fizz", "Gragas", "Heimerdinger", "Karthus",
-		"Kassadin", "Katarina", "Kayle", "Kennen", "Leblanc", "Lissandra", "Lux", "Malzahar", "Mordekaiser", "Morgana", "Nidalee", "Orianna",
-		"Ryze", "Sion", "Swain", "Syndra", "Teemo", "TwistedFate", "Veigar", "Viktor", "Vladimir", "Xerath", "Ziggs", "Zyra", "Velkoz"
-	},
-			
-	Support = {
-		"Alistar", "Blitzcrank", "Janna", "Karma", "Leona", "Lulu", "Nami", "Nunu", "Sona", "Soraka", "Taric", "Thresh", "Zilean", "Braum"
-	},
-			
-	Tank = {
-		"Amumu", "Chogath", "DrMundo", "Galio", "Hecarim", "Malphite", "Maokai", "Nasus", "Rammus", "Sejuani", "Nautilus", "Shen", "Singed", "Skarner", "Volibear",
-		"Warwick", "Yorick", "Zac"
-	},
-			
-	AD_Carry = {
-		"Ashe", "Caitlyn", "Corki", "Draven", "Ezreal", "Graves", "Jayce", "Jinx", "KogMaw", "Lucian", "MasterYi", "MissFortune", "Pantheon", "Quinn", "Shaco", "Sivir",
-		"Talon","Tryndamere", "Tristana", "Twitch", "Urgot", "Varus", "Vayne", "Yasuo", "Zed"
-	},
-			
-	Bruiser = {
-		"Aatrox", "Darius", "Elise", "Fiora", "Gangplank", "Garen", "Irelia", "JarvanIV", "Jax", "Khazix", "LeeSin", "Nocturne", "Olaf", "Poppy",
-		"Renekton", "Rengar", "Riven", "Rumble", "Shyvana", "Trundle", "Udyr", "Vi", "MonkeyKing", "XinZhao"
-	}
-}
-
 function OnLoad()
 	-- Load Menu
 	Menu = scriptConfig("Challengers Katarina", "Katarina")
-
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("M"))
@@ -207,7 +177,6 @@ function OnLoad()
 	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E, DAMAGE_MAGIC, true)
 	ts.name = "[Katarina]"
 	Menu:addTS(ts)
-	SetTablePriorities()
 
 	-- Minions
 	enemyMinions = minionManager(MINION_ENEMY, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
@@ -376,13 +345,13 @@ function random(min, max, precision)
 end
 
 function OnCastSpell(iSpell,startPos,endPos,targetUnit)
-	if iSpell == 4 then
+	if iSpell == 3 then
 		ULT.using = true
 		ULT.last  = os.clock()
-		elseif  Menu.Misc.humanizer and iSpell == 3 then
-			HUMANIZER.E.last   = os.clock()
-			HUMANIZER.E.delay  = random(0, 1.5, 2)
-			HUMANIZER.E.canuse = false
+	elseif  Menu.Misc.humanizer and iSpell == 2 then
+		HUMANIZER.E.last   = os.clock()
+		HUMANIZER.E.delay  = random(0, 1.5, 2)
+		HUMANIZER.E.canuse = false
 	end
 end
 
@@ -543,7 +512,7 @@ function WardJump(x, y, enemy)
 		local Jumped = false
 		local WardDistance = 300
 
-		--Ally jump
+		-- Ally jump
 		for i, ally in ipairs(GetAllyHeroes()) do
 			if ValidTarget(ally, RANGE.E, false) then
 				if GetDistanceSqr(ally, mousePos) <= WardDistance*WardDistance then
@@ -603,7 +572,7 @@ function GetWardSlot()
 		return nil
 	end
 
-	-- Ward Priorities --
+	-- Ward Priorities
 	if getReadySlot(wards.Trinket1) ~= nil then
 		return getReadySlot(wards.Trinket1)
 	elseif getReadySlot(wards.Trinket2) ~= nil then
@@ -627,38 +596,6 @@ function CheckZhonya()
 	if Menu.Misc.Items.useZhonya then
 		if ITEMS.zhonyaready and ((myHero.health/myHero.maxHealth)*100) <= Menu.Misc.Items.zhonyaHp then
 			CastSpell(ITEMS.zhonyaslot)
-		end
-	end
-end
-
-
-function SetTablePriorities()
-	local table = GetEnemyHeroes()
-	if #table == 5 then
-		for i, enemy in ipairs(table) do
-			SetPriority(priorityTable.AD_Carry, enemy, 1)
-			SetPriority(priorityTable.AP, enemy, 2)
-			SetPriority(priorityTable.Support, enemy, 3)
-			SetPriority(priorityTable.Bruiser, enemy, 4)
-			SetPriority(priorityTable.Tank, enemy, 5)
-		end
-	elseif #table == 3 then
-		for i, enemy in ipairs(table) do
-			SetPriority(priorityTable.AD_Carry, enemy, 1)
-			SetPriority(priorityTable.AP, enemy, 1)
-			SetPriority(priorityTable.Support, enemy, 2)
-			SetPriority(priorityTable.Bruiser, enemy, 2)
-			SetPriority(priorityTable.Tank, enemy, 3)
-		end
-	else
-		InfoMessage("Too few champions to arrange priority!")
-	end
-end
-
-function SetPriority(table, hero, priority)
-	for i = 1, #table do
-		if hero.charName:find(table[i]) ~= nil then
-			TS_SetHeroPriority(priority, hero.charName)
 		end
 	end
 end
