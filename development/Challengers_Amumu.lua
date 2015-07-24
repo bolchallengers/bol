@@ -10,7 +10,7 @@
 
 	Changelog!
 	Version: 1.1
-		* Fix Smite damage function.
+		* Fix Auto Smite.
 
 	Version: 1.0
 		* Costomizable Key Settings.
@@ -75,13 +75,9 @@ local RANGE = {
 }
 
 -- Summoner Spells
-local SPELLS = {
-	SMITE = {
-		slot = nil,
-		range = 500,
-		ready = false
-	}
-}
+local smiteslot = nil
+local SMITEREADY
+local smiterange = 500
 
 -- Using Items
 local ITEMS = {
@@ -105,8 +101,7 @@ function OnLoad()
 	Menu = scriptConfig("Challengers Amumu", "Amumu")
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-		Menu.Keys:addParam("clearKey", "Lane Clear On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("L"))
-		Menu.Keys:addParam("jungleKey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("J"))
+		Menu.Keys:addParam("clearKey", "Lane / Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("L"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
 		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -119,17 +114,13 @@ function OnLoad()
 		Menu.KS:addParam("useW", "KS with (W)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useE", "KS with (E)", SCRIPT_PARAM_ONOFF, true)
 
-	Menu:addSubMenu("["..myHero.charName.."] - Lane Clear Settings", "LaneClear")
+	Menu:addSubMenu("["..myHero.charName.."] - Lane / Jungle Clear Settings", "LaneClear")
 		Menu.LaneClear:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.LaneClear:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
 		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Jungle clear Settings", "JungleSettings")
-		Menu.JungleSettings:addParam("useQ", "Use Q in 'Jungle clear'", SCRIPT_PARAM_ONOFF, true)
-		Menu.JungleSettings:addParam("useW", "Auto W in 'Jungle clear'", SCRIPT_PARAM_ONOFF, true)
-		Menu.JungleSettings:addParam("useE", "Use E in 'Jungle clear'", SCRIPT_PARAM_ONOFF, true)
 		Menu.JungleSettings:addParam("finishSmite", "Finish with Smite", SCRIPT_PARAM_ONOFF, true)
-		Menu.JungleSettings:addParam("steal", "Q-Smite Steal Dragon/Baron in 'LastHit'", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
 		Menu.Misc:addParam("ManaManager", "Do not use W under Mana %",SCRIPT_PARAM_SLICE, 40, 0, 100, 0)
@@ -145,7 +136,6 @@ function OnLoad()
 	-- Perma Shows
 	Menu.Keys:permaShow("comboKey")
 	Menu.Keys:permaShow("clearKey")
-	Menu.Keys:permaShow("jungleKey")
 
 	-- Target Selector
 	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.Q, DAMAGE_MAGIC, true)
@@ -161,9 +151,9 @@ function OnLoad()
 
 	-- Check Spells Slots
 	if myHero:GetSpellData(SUMMONER_1).name:lower():find("smite") then
-		SPELLS.SMITE.slot = SUMMONER_1
+		smiteslot = SUMMONER_1
 	elseif myHero:GetSpellData(SUMMONER_2).name:lower():find("smite") then
-		SPELLS.SMITE.slot = SUMMONER_2
+		smiteslot = SUMMONER_2
 	end
 
 	InfoMessage("Version: ".. version .. " loaded!")
@@ -179,22 +169,18 @@ function OnTick()
 		Combo()
 	end
 
-	if Menu.Keys.clearKey then
-		LaneClear()
-	end
-
-	if Menu.Keys.jungleKey then
-		JungleClear()
-	end
-
-	if Menu.Keys.jungleKey and Menu.JungleSettings.steal then
-		if SPELLS.SMITE.slot ~= nil then
+	if Menu.Keys.clearKey and Menu.JungleSettings.steal then
+		RANGE.Q = 1100
+		if smiteslot ~= nil then
 			JungleSteal()
 		end
 	end
 
+	if Menu.Keys.clearKey then
+		LaneClear()
+	end
+
 	KillSteal()
-	FinishDespair(target)
 end
 
 function Checks()
@@ -209,8 +195,10 @@ function Checks()
 	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
 	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
 
-	if SPELLS.SMITE.slot ~= nil then
-		SPELLS.SMITE.ready = (myHero:CanUseSpell(SPELLS.SMITE.slot) == READY)
+	VARS.inRange = false
+
+	if smiteslot ~= nil then
+		SMITEREADY = (myHero:CanUseSpell(smiteslot) == READY)
 	end
 end
 
@@ -224,7 +212,7 @@ function ObjectInArea(range, objects)
 end
 
 function CheckW()
-	if target and ValidTarget(target) and not target.dead and (myHero.mana / myHero.maxMana > Menu.Misc.ManaManager /100) then
+	if target and ValidTarget(target) and not target.dead and (myHero.mana / myHero.maxMana > Menu.Misc.ManaManager / 100) then
 		VARS.inRange = true
 	else
 		VARS.inRange = false
@@ -236,8 +224,8 @@ function CheckW()
 	end
 end
 
-function FinishDespair(uint)
-	if uint == nil or GetDistance(uint) > RANGE.W then
+function FinishDespair(myTarget)
+	if myTarget == nil or GetDistance(myTarget) > RANGE.W then
 		if VARS.despair then
 			CastSpell(_W)
 		end
@@ -245,15 +233,15 @@ function FinishDespair(uint)
 end
 
 function GetSmiteDamage()
-	if not SPELLS.SMITE.ready then
+	if not SMITEREADY then
 		return 0
 	end
 
 	return math.max(20 * myHero.level + 370, 30 * myHero.level + 330, 40 * myHero.level + 240, 50 * myHero.level + 100)
 end
 
-
 function JungleSteal()
+	jungleMinions:update()
 	target = nil
 	for i, minion in pairs(jungleMinions.objects) do
 		if ValidTarget(minion) and minion.visible and minion.health > 0 and minion.charName:lower():find("dragon") then
@@ -269,32 +257,32 @@ function JungleSteal()
 		local totalDamage = 0
 		if CHECKS.Q then
 			qDmg = getDmg("Q", target, myHero) end
-			if SPELLS.SMITE.ready then
+			if SMITEREADY then
 				smiteDmg = GetSmiteDamage()
 			end
 			
-			totalDamage = smiteDmg + qDmg
-			if totalDamage >= target.health then
-				if ValidTarget(target, RANGE.Q) then
-					local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
-					if HitChance >= 2 then
-						CastSpell(_Q, CastPosition.x, CastPosition.z)
-					end
+		totalDamage = smiteDmg + qDmg
+		if totalDamage >= target.health then
+			if ValidTarget(target, RANGE.Q) then
+				local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
+				if HitChance >= 2 then
+					CastSpell(_Q, CastPosition.x, CastPosition.z)
 				end
-			end
-
-			if ValidTarget(target, SPELLS.SMITE.range) then
-				CastSpell(SPELLS.SMITE.slot, target)
-				return
 			end
 		end
 
-		-- Steal Big Minions
-		if Menu.JungleSettings.finishSmite and SPELLS.SMITE.slot ~= nil and SPELLS.SMITE.ready and ValidTarget(target, SPELLS.SMITE.range) and CheckBigMinion(target) and target.health < smiteDmg then
-			CastSpell(SPELLS.SMITE.slot, target)
+		if ValidTarget(target, smiterange) then
+			CastSpell(smiteslot, target)
 			return
 		end
 	end
+
+	-- Steal Big Minions
+	if Menu.JungleSettings.finishSmite and smiteslot ~= nil and ValidTarget(target, smiterange) and CheckBigMinion(target) and target.health < smiteDmg then
+		CastSpell(smiteslot, target)
+		return
+	end
+end
 
 
 function CheckBigMinion(minion)
@@ -317,31 +305,27 @@ function Combo()
 		return
 	end
 
-	if CHECKS.Q and Menu.Combo.useQ and ValidTarget(target, RANGE.Q) then 
-		if GetDistance(target) <= RANGE.Q then
+	if target and ValidTarget(target) and not target.dead and target.visible  then
+		if CHECKS.Q and Menu.Combo.useQ and GetDistance(target) <= RANGE.Q then 
 			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
 			if HitChance >= 2 then
 				CastSpell(_Q, CastPosition.x, CastPosition.z)
 			end
 		end
-	end
 
-	if CHECKS.W and Menu.Combo.useW then
-		if ObjectInArea(RANGE.W, GetEnemyHeroes()) then
+		if CHECKS.W and Menu.Combo.useW and ObjectInArea(RANGE.W, GetEnemyHeroes()) then
 			CheckW()
 		end
-	end
 
-	if CHECKS.E and Menu.Combo.useE and ValidTarget(target, RANGE.E) then
-		if GetDistance(target) <= RANGE.E and ValidTarget(target, RANGE.E) then
+		if CHECKS.E and Menu.Combo.useE and GetDistance(target) <= RANGE.E then
 			CastSpell(_E)
 		end
-	end
 
-	if CHECKS.R and Menu.Combo.useR  and ValidTarget(target, RANGE.R) then
-		if GetDistance(target) <= RANGE.R then
-			if target.health < getDmg("R", target, myHero) then
-				CastSpell(_R)
+		if CHECKS.R and Menu.Combo.useR  and ValidTarget(target, RANGE.R) then
+			if GetDistance(target) <= RANGE.R then
+				if target.health < getDmg("R", target, myHero) then
+					CastSpell(_R)
+				end
 			end
 		end
 	end
@@ -380,8 +364,41 @@ end
 
 function LaneClear()
 	target = nil
-	enemyMinions:update()
+	jungleMinions:update()
+	
+	for i, minion in ipairs(jungleMinions.objects) do
+		if ValidTarget(minion, 600) and (target == nil or not ValidTarget(target)) then
+			target = minion
+		end
+	end
 
+	if target ~= nil and ValidTarget(target) then
+		local smiteDmg = math.max(20*myHero.level+370,30*myHero.level+330,40*myHero.level+240,50*myHero.level+100)
+		if Menu.JungleSettings.finishSmite and smiteslot ~= nil and SMITEREADY and ValidTarget(target, smiterange) and CheckBigMinion(target) and target.health < smiteDmg then
+			CastSpell(smiteslot, target)
+			return
+		end
+
+
+		if Menu.LaneClear.useQ and CHECKS.Q then
+			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
+			if HitChance >= 2 then
+				CastSpell(_Q, CastPosition.x, CastPosition.z)
+			end
+		end
+
+		if Menu.LaneClear.useW and CHECKS.W and ObjectInArea(RANGE.W, jungleMinions.objects) then
+			CheckW()
+		end
+
+		if Menu.LaneClear.useE then
+			CastSpell(_E, target)
+		end
+	end
+
+
+	target = nil
+	enemyMinions:update()
 	for i, minion in ipairs(enemyMinions.objects) do
 		if ValidTarget(minion, 600) and (target == nil or not ValidTarget(target)) then
 			target = minion
@@ -404,38 +421,8 @@ function LaneClear()
 			CastSpell(_E, target)
 		end
 	end
-end
 
-function JungleClear()
-	target = nil
-	jungleMinions:update()
-
-	 for i, minion in pairs(jungleMinions.objects) do
-		if ValidTarget(minion) and not minion.dead then
-			if target == nil then
-				target = minion
-			elseif GetDistance(minion) < GetDistance(target) then
-				target = minion
-			end
-		end
-	end
-
-	if target ~= nil and ValidTarget(target) then
-		if Menu.JungleSettings.useQ then
-			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
-			if HitChance >= 2 then
-				CastSpell(_Q, CastPosition.x, CastPosition.z)
-			end
-		end
-
-		if Menu.JungleSettings.useW and CHECKS.W and ObjectInArea(RANGE.W, jungleMinions.objects) then
-			CheckW()
-		end
-
-		if Menu.JungleSettings.useE and CHECKS.E then
-			CastSpell(_E, target)
-		end
-	end
+	FinishDespair(target)
 end
 
 function OnDeleteObj(obj)
