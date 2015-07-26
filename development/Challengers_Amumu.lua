@@ -15,6 +15,7 @@
 		* Remove Lane Clear, Amumu is a jungler. don't need lane clear.
 		* Remove W from combo.
 		* Add ultimate mode, Aways and If Killable.
+		* The W in the jungle clear on/off to spend less mana.
 
 	Version: 1.0
 		* Costomizable Key Settings.
