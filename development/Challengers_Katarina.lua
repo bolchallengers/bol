@@ -16,6 +16,7 @@
 		* Fix ignite not working properlly.
 		* Add humanizer for "E".
 		* Add draw ranges for skills.
+		* Fix a ward jump bug.
 
 	Version: 1.1
 		* Added Ward Jump (Credits to Skeem).
@@ -319,7 +320,7 @@ function Combo()
 			end
 		end
 
-		if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR  and ValidTarget(target, RANGE.R)then
+		if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR and ValidTarget(target, RANGE.R) then
 			if GetDistance(target) <= RANGE.R then
 				CastSpell(_R)
 			end
@@ -492,7 +493,7 @@ function OnCreateObj(obj)
 	end
 end
 
-function OnDeleteObj(object)
+function OnDeleteObj(obj)
 	if obj then
 		for i, ward in pairs(wardsTable) do
 			if not ward.valid or obj.name == ward.name then
