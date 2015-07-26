@@ -11,6 +11,10 @@
 	Changelog!
 	Version: 1.1
 		* Fix Auto Smite.
+		* Now you can enable or disable auto updates.
+		* Remove Lane Clear, Amumu is a jungler. don't need lane clear.
+		* Remove W from combo.
+		* Add ultimate mode, Aways and If Killable.
 
 	Version: 1.0
 		* Costomizable Key Settings.
@@ -39,26 +43,7 @@ local UPDATE_HOST = "raw.githubusercontent.com"
 local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Amumu.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
-
-function InfoMessage(msg)
-	print("<font color=\"#6699ff\"><b>Challengers Amumu:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
-end
-
-local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Amumu.version")
-if ServerData then
-	ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
-	if ServerVersion then
-		if tonumber(version) < ServerVersion then
-			InfoMessage("New version available ("..ServerVersion..")")
-			InfoMessage("Updating, please don't press F9")
-			DelayAction(function() DownloadFile(UPDATE_URL, UPDATE_FILE_PATH, function () InfoMessage("Successfully updated. ("..version.." => "..ServerVersion.."), press F9 twice to load the updated version.") end) end, 3)
-		else
-			InfoMessage("You have got the latest version ("..ServerVersion..")")
-		end
-	end
-else
-	InfoMessage("Error downloading version info")
-end
+local UPDATE_SCRIPT = true
 
 -- Variables
 local VARS = {
@@ -96,30 +81,56 @@ local CHECKS = {
 -- Target selector
 local ts = nil
 
+function InfoMessage(msg)
+	print("<font color=\"#6699ff\"><b>Challengers Amumu:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
+end
+
+function UpdateScript()
+	if UPDATE_SCRIPT then
+		local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Amumu.version")
+		if ServerData then
+			ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
+			if ServerVersion then
+				if tonumber(version) < ServerVersion then
+					InfoMessage("New version available ("..ServerVersion..")")
+					InfoMessage("Updating, please don't press F9")
+					DelayAction(function() DownloadFile(UPDATE_URL, UPDATE_FILE_PATH, function () InfoMessage("Successfully updated. ("..version.." => "..ServerVersion.."), press F9 twice to load the updated version.") end) end, 3)
+				else
+					InfoMessage("You have got the latest version ("..ServerVersion..")")
+				end
+			end
+		else
+			InfoMessage("Error downloading version info")
+		end
+	end
+end
+
 function OnLoad()
+	-- Update Script
+	UpdateScript()
+
 	-- Load Menu
 	Menu = scriptConfig("Challengers Amumu", "Amumu")
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-		Menu.Keys:addParam("clearKey", "Lane / Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("L"))
+		Menu.Keys:addParam("clearKey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("J"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
 		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Combo:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
 		Menu.Combo:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Combo:addParam("useR", "Use R if killable", SCRIPT_PARAM_ONOFF, true)
+		Menu.Combo:addSubMenu("["..myHero.charName.."] - Ultimate Settings", "ultimate") 
+			Menu.Combo.ultimate:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
+			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"Aways", "If Killable"})
 
 	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
 		Menu.KS:addParam("useQ", "KS with (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useW", "KS with (W)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useE", "KS with (E)", SCRIPT_PARAM_ONOFF, true)
 
-	Menu:addSubMenu("["..myHero.charName.."] - Lane / Jungle Clear Settings", "LaneClear")
-		Menu.LaneClear:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.LaneClear:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
-		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
-
 	Menu:addSubMenu("["..myHero.charName.."] - Jungle clear Settings", "JungleSettings")
+		Menu.JungleSettings:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.JungleSettings:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.JungleSettings:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 		Menu.JungleSettings:addParam("finishSmite", "Finish with Smite", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
@@ -146,7 +157,6 @@ function OnLoad()
 	VP = VPrediction()
 
 	-- Minions
-	enemyMinions = minionManager(MINION_ENEMY, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
 	jungleMinions = minionManager(MINION_JUNGLE, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	-- Check Spells Slots
@@ -177,7 +187,7 @@ function OnTick()
 	end
 
 	if Menu.Keys.clearKey then
-		LaneClear()
+		JungleClear()
 	end
 
 	KillSteal()
@@ -313,18 +323,22 @@ function Combo()
 			end
 		end
 
-		if CHECKS.W and Menu.Combo.useW and ObjectInArea(RANGE.W, GetEnemyHeroes()) then
-			CheckW()
-		end
-
 		if CHECKS.E and Menu.Combo.useE and GetDistance(target) <= RANGE.E then
 			CastSpell(_E)
 		end
 
-		if CHECKS.R and Menu.Combo.useR  and ValidTarget(target, RANGE.R) then
-			if GetDistance(target) <= RANGE.R then
-				if target.health < getDmg("R", target, myHero) then
+		if Menu.Combo.ultimate.ultMode == 1 then
+			if CHECKS.R and Menu.Combo.ultimate.useR  and ValidTarget(target, RANGE.R) then
+				if GetDistance(target) <= RANGE.R then
 					CastSpell(_R)
+				end
+			end
+		elseif Menu.Combo.ultimate.ultMode == 2 then
+			if CHECKS.R and Menu.Combo.ultimate.useR  and ValidTarget(target, RANGE.R) then
+				if GetDistance(target) <= RANGE.R then
+					if target.health < getDmg("R", target, myHero) then
+						CastSpell(_R)
+					end
 				end
 			end
 		end
@@ -362,7 +376,7 @@ function KillSteal()
 	end
 end
 
-function LaneClear()
+function JungleClear()
 	target = nil
 	jungleMinions:update()
 	
@@ -373,51 +387,26 @@ function LaneClear()
 	end
 
 	if target ~= nil and ValidTarget(target) then
-		local smiteDmg = math.max(20*myHero.level+370,30*myHero.level+330,40*myHero.level+240,50*myHero.level+100)
+		local smiteDmg = GetSmiteDamage()
+
 		if Menu.JungleSettings.finishSmite and smiteslot ~= nil and SMITEREADY and ValidTarget(target, smiterange) and CheckBigMinion(target) and target.health < smiteDmg then
 			CastSpell(smiteslot, target)
 			return
 		end
 
 
-		if Menu.LaneClear.useQ and CHECKS.Q then
+		if Menu.JungleSettings.useQ and CHECKS.Q then
 			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
 			if HitChance >= 2 then
 				CastSpell(_Q, CastPosition.x, CastPosition.z)
 			end
 		end
 
-		if Menu.LaneClear.useW and CHECKS.W and ObjectInArea(RANGE.W, jungleMinions.objects) then
+		if Menu.JungleSettings.useW and CHECKS.W and ObjectInArea(RANGE.W, jungleMinions.objects) then
 			CheckW()
 		end
 
-		if Menu.LaneClear.useE then
-			CastSpell(_E, target)
-		end
-	end
-
-
-	target = nil
-	enemyMinions:update()
-	for i, minion in ipairs(enemyMinions.objects) do
-		if ValidTarget(minion, 600) and (target == nil or not ValidTarget(target)) then
-			target = minion
-		end
-	end
-
-	if target ~= nil then
-		if Menu.LaneClear.useQ and CHECKS.Q then
-			local CastPosition,  HitChance,  Position = VP:GetLineCastPosition(target, 0.25, 80, RANGE.Q, 2000, myHero, true)
-			if HitChance >= 2 then
-				CastSpell(_Q, CastPosition.x, CastPosition.z)
-			end
-		end
-
-		if Menu.LaneClear.useW and CHECKS.W and ObjectInArea(RANGE.W, enemyMinions.objects) then
-			CheckW()
-		end
-
-		if Menu.LaneClear.useE then
+		if Menu.JungleSettings.useE then
 			CastSpell(_E, target)
 		end
 	end
