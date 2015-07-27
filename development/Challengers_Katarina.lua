@@ -78,33 +78,42 @@ local CHECKS = {
 	R = false
 }
 
-function InfoMessage(msg)
-	print("<font color=\"#FF9A00\"><b>Challengers Katarina:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
-end
-
 -- Updater
 local UPDATE_HOST = "raw.githubusercontent.com"
 local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Katarina.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
+local UPDATE_SCRIPT = true
+local version = 1.2
 
-local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Nidalee.version")
-if ServerData then
-	ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
-	if ServerVersion then
-		if tonumber(version) < ServerVersion then
-			InfoMessage("New version available ("..ServerVersion..")")
-			InfoMessage("Updating, please don't press F9")
-			DelayAction(function() DownloadFile(UPDATE_URL, UPDATE_FILE_PATH, function () InfoMessage("Successfully updated. ("..version.." => "..ServerVersion.."), press F9 twice to load the updated version.") end) end, 3)
+function InfoMessage(msg)
+	print("<font color=\"#FF9A00\"><b>Challengers Katarina:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
+end
+
+function UpdateScript()
+	if UPDATE_SCRIPT then
+		local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Katarina.version")
+		if ServerData then
+			ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
+			if ServerVersion then
+				if tonumber(version) < ServerVersion then
+					InfoMessage("New version available ("..ServerVersion..")")
+					InfoMessage("Updating, please don't press F9")
+					DelayAction(function() DownloadFile(UPDATE_URL, UPDATE_FILE_PATH, function () InfoMessage("Successfully updated. ("..version.." => "..ServerVersion.."), press F9 twice to load the updated version.") end) end, 3)
+				else
+					InfoMessage("You have got the latest version ("..ServerVersion..")")
+				end
+			end
 		else
-			InfoMessage("You have got the latest version ("..ServerVersion..")")
+			InfoMessage("Error downloading version info")
 		end
 	end
-else
-	InfoMessage("Error downloading version info")
 end
 
 function OnLoad()
+	-- Check Update
+	UpdateScript()
+
 	-- Load Menu
 	Menu = scriptConfig("Challengers Katarina", "Katarina")
 
