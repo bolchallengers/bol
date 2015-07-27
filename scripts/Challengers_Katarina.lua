@@ -32,9 +32,6 @@ if myHero.charName ~= "Katarina" then
 	return
 end
 
--- Info
-local version = 1.2
-
 -- Ult Helper
 local ULT = {
 	using  = false,
