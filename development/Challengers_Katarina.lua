@@ -12,16 +12,13 @@
 	Version: 1.2
 		* Rework range code.
 		* Fix kill steal usage.
-		* More checks for safe combo and kill steal.
-		* Fix ignite not working properlly.
-		* Add humanizer for "E".
 		* Add draw ranges for skills.
 		* Fix a ward jump bug.
 
 	Version: 1.1
 		* Added Ward Jump (Credits to Skeem).
 		* Add auto Zhonyas.
-		* Rework ignite.
+		* Rewaork ignite.
 
 	Version: 1.0
 		* Costomizable Key Settings.
@@ -47,7 +44,7 @@ local ULT = {
 -- Ranges
 local RANGE = {
 	Q = 675,
-	W = 385,
+	W = 375,
 	E = 700,
 	R = 550
 }
@@ -78,29 +75,20 @@ local CHECKS = {
 	Q = false,
 	W = false,
 	E = false,
-	R = false,
-	I = false
+	R = false
 }
 
--- Humanizer
-local HUMANIZER = {
-	E = {
-		last = 0,
-		delay = 0,
-		canuse = true
-	}
-}
+function InfoMessage(msg)
+	print("<font color=\"#FF9A00\"><b>Challengers Katarina:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
+end
 
+-- Updater
 local UPDATE_HOST = "raw.githubusercontent.com"
 local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Katarina.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
 
-function InfoMessage(msg)
-	print("<font color=\"#6699ff\"><b>Challengers Katarina:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
-end
-
-local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Katarina.version")
+local ServerData = GetWebResult(UPDATE_HOST, "/bolchallengers/bol/master/scripts/Challengers_Nidalee.version")
 if ServerData then
 	ServerVersion = type(tonumber(ServerData)) == "number" and tonumber(ServerData) or nil
 	if ServerVersion then
@@ -119,6 +107,7 @@ end
 function OnLoad()
 	-- Load Menu
 	Menu = scriptConfig("Challengers Katarina", "Katarina")
+
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("M"))
@@ -127,27 +116,28 @@ function OnLoad()
 
 	Menu:addSubMenu("["..myHero.charName.."] - Harass Settings", "Harass")
 		Menu.Harass:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Harass:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, false) 
-		Menu.Harass:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, false)
+		Menu.Harass:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
+		Menu.Harass:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
 		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.Combo:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
 		Menu.Combo:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Combo:addParam("useIgnite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 		Menu.Combo:addSubMenu("["..myHero.charName.."] - Ultimate Settings", "ultimate") 
 			Menu.Combo.ultimate:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
 			Menu.Combo.ultimate:addParam("stopclick",  "Stop (R) With Right Click", SCRIPT_PARAM_ONOFF, false)
 			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"QEWR", "EQWR"})
 
 	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
-		Menu.KS:addParam("useQ", "KS with (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.KS:addParam("useW", "KS with (W)", SCRIPT_PARAM_ONOFF, true)
-		Menu.KS:addParam("useE", "KS with (E)", SCRIPT_PARAM_ONOFF, true)
+		Menu.KS:addParam("useKS", "Use Kill Steal", SCRIPT_PARAM_ONOFF, true)
+		Menu.KS:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.KS:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.KS:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
+		Menu.KS:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
-		Menu.Farm:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Farm:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Farm:addParam("useQFarm", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Farm:addParam("useWFarm", "Use (W)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Lane Clear Settings", "LaneClear")
 		Menu.LaneClear:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -155,7 +145,6 @@ function OnLoad()
 		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
-		Menu.Misc:addParam("humanizer", "Use Humanizer", SCRIPT_PARAM_ONOFF, true)
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Ward Jump Settings", "WardJump") 
 			Menu.Misc.WardJump:addParam('wardjumpKey', 'Ward Jump Key',  SCRIPT_PARAM_ONKEYDOWN, false, string.byte("H"))
 			Menu.Misc.WardJump:addParam("maxjump", "Always Ward Jump at Max Range", SCRIPT_PARAM_ONOFF, true)
@@ -175,7 +164,7 @@ function OnLoad()
 	Menu.Keys:permaShow("farmKey")
 
 	-- Target Selector
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E, DAMAGE_MAGIC, true)
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E)
 	ts.name = "[Katarina]"
 	Menu:addTS(ts)
 
@@ -186,20 +175,16 @@ function OnLoad()
 	otherMinions = minionManager(MINION_OTHER, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	-- Ignite check
-	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
-		ignite = SUMMONER_1
-	elseif myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") then
-    		ignite = SUMMONER_2
-	end
-
-	-- Callback Binds
-	AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
+	ignite = myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") and SUMMONER_1 or myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") and SUMMONER_2 or nil
 
 	-- Override Globals Credits to Aroc :3
 	_G.myHero.SaveMove = _G.myHero.MoveTo
 	_G.myHero.SaveAttack = _G.myHero.Attack
 	_G.myHero.MoveTo = function(...) if not ULT.using then _G.myHero.SaveMove(...) end end
 	_G.myHero.Attack = function(...) if not ULT.using then _G.myHero.SaveAttack(...) end end
+
+	-- Callbacks
+	AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) 	OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
 
 	-- Wards
 	wardsTable = {}
@@ -215,16 +200,19 @@ end
 
 function OnTick()
 	Checks()
+
 	if Menu.Misc.Items.useZhonya then
 		CheckZhonya()
 	end
 
 	if Menu.Keys.comboKey then
 		Combo()
+		return
 	end
 
 	if Menu.Keys.harassKey then
 		Harass()
+		return
 	end
 
 	if Menu.Keys.farmKey then
@@ -235,14 +223,16 @@ function OnTick()
 		LaneClear()
 	end
 
+	if Menu.KS.useKS then
+		KillSteal()
+	end
+
 	if Menu.Misc.WardJump.wardjumpKey then
     		local WardPos = (GetDistanceSqr(mousePos) <= 600 * 600 and mousePos) or (Menu.Misc.WardJump.maxjump and myHero + (Vector(mousePos) - myHero):normalized()*590)
 		if WardPos then
 			WardJump(WardPos.x, WardPos.z)
 		end
 	end
-
-	KillSteal()
 end
 
 function Checks()
@@ -253,16 +243,9 @@ function Checks()
 	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
 	CHECKS.E = (myHero:CanUseSpell(_E) == READY)
 	CHECKS.R = (myHero:CanUseSpell(_R) == READY)
-	CHECKS.I = (ignite ~= nil and myHero:CanUseSpell(ignite) == READY)
 
 	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
 	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
-
-	if not HUMANIZER.E.canuse then
-		if (os.clock() - HUMANIZER.E.last) > HUMANIZER.E.delay then
-			HUMANIZER.E.canuse = true
-		end
-	end
 
 	if ULT.using then
 		if (os.clock() - ULT.last) > 2.5 then
@@ -273,56 +256,55 @@ function Checks()
 end
 
 function Combo()
-	if myHero.dead and not target then
-		return
-	end
-
-	if Menu.Combo.ultimate.ultMode == 1 then
-		if CHECKS.Q and Menu.Combo.useQ and ValidTarget(target, RANGE.Q) then 
-			if GetDistance(target) <= RANGE.Q then
-				CastSpell(_Q, target) 
+	if ValidTarget(target) then
+		if Menu.Combo.ultimate.ultMode == 1 then
+			if CHECKS.Q and Menu.Combo.useQ then 
+				if GetDistance(target) <= RANGE.Q then
+					CastSpell(_Q, target) 
+				end
 			end
-		end
 
-		if CHECKS.E and Menu.Combo.useE and ValidTarget(target, RANGE.E) then
-			if GetDistance(target) <= RANGE.E and ValidTarget(target, RANGE.E) then
-				CastSpell(_E, target)
+			if CHECKS.E and Menu.Combo.useE then
+				if GetDistance(target) <= RANGE.E then
+					CastSpell(_E, target)
+				end
 			end
-		end
 
-		if CHECKS.W and Menu.Combo.useW and ValidTarget(target, RANGE.W) then
-			if GetDistance(target) <= RANGE.W then
-				CastSpell(_W)
-			end
-		end
 
-		if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR  and ValidTarget(target, RANGE.R)then
-			if GetDistance(target) <= RANGE.R then
-				CastSpell(_R)
+			if CHECKS.W and Menu.Combo.useW then
+				if GetDistance(target) <= RANGE.W then
+					CastSpell(_W)
+				end
 			end
-		end
-	elseif Menu.Combo.ultimate.ultMode == 2 then
-		if CHECKS.E and Menu.Combo.useE and ValidTarget(target, RANGE.E) then
-			if GetDistance(target) <= RANGE.E then
-				CastSpell(_E, target)
-			end
-		end
 
-		if CHECKS.Q and Menu.Combo.useQ and ValidTarget(target, RANGE.Q) then 
-			if GetDistance(target) <= RANGE.Q then
-				CastSpell(_Q, target) 
+			if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR then
+				if GetDistance(target) <= RANGE.R then
+					CastSpell(_R)
+				end
 			end
-		end
-
-		if CHECKS.W and Menu.Combo.useW and ValidTarget(target, RANGE.W) then
-			if GetDistance(target) <= RANGE.W then
-				CastSpell(_W)
+		elseif Menu.Combo.ultimate.ultMode == 2 then
+			if CHECKS.E and Menu.Combo.useE then
+				if GetDistance(target) <= RANGE.E then
+					CastSpell(_E, target)
+				end
 			end
-		end
 
-		if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR and ValidTarget(target, RANGE.R) then
-			if GetDistance(target) <= RANGE.R then
-				CastSpell(_R)
+			if CHECKS.Q and Menu.Combo.useQ then 
+				if GetDistance(target) <= RANGE.Q then
+					CastSpell(_Q, target)
+				end
+			end
+
+			if CHECKS.W and Menu.Combo.useW then
+				if GetDistance(target) <= RANGE.W then
+					CastSpell(_W)
+				end
+			end
+
+			if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR then
+				if GetDistance(target) <= RANGE.R then
+					CastSpell(_R)
+				end
 			end
 		end
 	end
@@ -336,23 +318,11 @@ function OnWndMsg(msg, key)
 	end
 end
 
-function random(min, max, precision)
-	local precision = precision or 0
-	local num = math.random()
-	local range = math.abs(max - min)
-	local offset = range * num
-	local randomnum = min + offset
-	return math.floor(randomnum * math.pow(10, precision) + 0.5) / math.pow(10, precision)
-end
 
 function OnCastSpell(iSpell,startPos,endPos,targetUnit)
 	if iSpell == 3 then
 		ULT.using = true
 		ULT.last  = os.clock()
-	elseif  Menu.Misc.humanizer and iSpell == 2 then
-		HUMANIZER.E.last   = os.clock()
-		HUMANIZER.E.delay  = random(0, 1.5, 2)
-		HUMANIZER.E.canuse = false
 	end
 end
 
@@ -363,21 +333,19 @@ function OnRemoveBuff(unit, buff)
 	end
 end
 
-function AutoIgnite(unit)
-	if ValidTarget(unit, 600) and unit.health <= 50 + (20 * myHero.level) then
-		if CHECKS.I then
-			CastSpell(ignite, unit)
+function AutoIgnite()
+	if myHero:CanUseSpell(ignite) == READY then
+		for i, enemy in ipairs(GetEnemyHeroes()) do
+			if ValidTarget(enemy, 600) and enemy.health <= getDmg("IGNITE", enemy, myHero) then
+				CastSpell(ignite, enemy)
+			end
 		end
-	end
+	end 
 end
 
 function KillSteal()
-	if myHero.dead then
-		return
-	end
-
 	for i, enemy in ipairs(GetEnemyHeroes()) do
-		if ValidTarget(enemy) and enemy.visible then
+		if ValidTarget(enemy) and GetDistance(enemy) < 700 then
 			if Menu.KS.useQ then
 				if CHECKS.Q and getDmg("Q", enemy, myHero) > enemy.health then
 					CastSpell(_Q, enemy)
@@ -396,8 +364,8 @@ function KillSteal()
 				end
 			end
 
-			if Menu.Combo.useIgnite then
-				AutoIgnite(enemy)
+			if Menu.KS.ignite and ignite ~= nil then
+				AutoIgnite()
 			end
 		end
 	end
@@ -432,7 +400,7 @@ end
 function Farm()
 	enemyMinions:update()
 	for i, minion in ipairs(enemyMinions.objects) do
-		if Menu.Farm.useQ then
+		if Menu.Farm.useQFarm then
 			if ValidTarget(minion) and GetDistance(minion) <= RANGE.Q and CHECKS.Q and getDmg("Q", minion, myHero) > minion.health then
 				CastSpell(_Q, minion)
 			end
@@ -440,7 +408,7 @@ function Farm()
 	end
 	
 	for i, minion in ipairs(enemyMinions.objects) do
-		if Menu.Farm.useW then
+		if Menu.Farm.useWFarm then
 			if ValidTarget(minion) and GetDistance(minion) <= RANGE.W and CHECKS.W and getDmg("W", minion, myHero) > minion.health then
 				CastSpell(_W)
 			end
@@ -513,7 +481,7 @@ function WardJump(x, y, enemy)
 		local Jumped = false
 		local WardDistance = 300
 
-		-- Ally jump
+		--Ally jump
 		for i, ally in ipairs(GetAllyHeroes()) do
 			if ValidTarget(ally, RANGE.E, false) then
 				if GetDistanceSqr(ally, mousePos) <= WardDistance*WardDistance then
@@ -573,7 +541,7 @@ function GetWardSlot()
 		return nil
 	end
 
-	-- Ward Priorities
+	-- Ward Priorities --
 	if getReadySlot(wards.Trinket1) ~= nil then
 		return getReadySlot(wards.Trinket1)
 	elseif getReadySlot(wards.Trinket2) ~= nil then
