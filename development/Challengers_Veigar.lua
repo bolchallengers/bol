@@ -21,6 +21,10 @@ if myHero.charName ~= "Veigar" then
 	return
 end
 
+-- Load Libs
+local VP = nil
+require("VPrediction")
+
 -- Ranges
 local RANGE = {
 	Q = 675,
@@ -31,18 +35,6 @@ local RANGE = {
 
 -- Ignite
 local ignite = nil
-
--- Ward Jump by Skeem
-local lastJump = 0
-local wards = {
-	SightStone = "itemghostward",
-	SightWard = "sightward",
-	VisionWard = "visionward",
-	Trinket1 = "trinkettotemlvl1",
-	Trinket2 = "trinkettotemlvl2",
-	Trinket3 = "trinkettotemlvl3",
-	Trinket4 = "trinkettotemlvl3b"
-}
 
 -- Using Items
 local ITEMS = {
@@ -63,7 +55,7 @@ local UPDATE_HOST = "raw.githubusercontent.com"
 local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Veigar.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
-local UPDATE_SCRIPT = true
+local UPDATE_SCRIPT = false
 local version = 1.0
 
 function InfoMessage(msg)
@@ -136,9 +128,6 @@ function OnLoad()
 		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
-		Menu.Misc:addSubMenu("["..myHero.charName.."] - Ward Jump Settings", "WardJump") 
-			Menu.Misc.WardJump:addParam('wardjumpKey', 'Ward Jump Key',  SCRIPT_PARAM_ONKEYDOWN, false, string.byte("H"))
-			Menu.Misc.WardJump:addParam("maxjump", "Always Ward Jump at Max Range", SCRIPT_PARAM_ONOFF, true)
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Items Settings", "Items") 
 			Menu.Misc.Items:addParam("useZhonya", "Use Zhonya", SCRIPT_PARAM_ONOFF, true)
 			Menu.Misc.Items:addParam("zhonyaHp", "% hp to Zhonya", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
@@ -168,14 +157,8 @@ function OnLoad()
 	-- Ignite check
 	ignite = myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") and SUMMONER_1 or myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") and SUMMONER_2 or nil
 
-	-- Wards
-	wardsTable = {}
-	for i = 0, objManager.maxObjects do
-		local obj = objManager:getObject(i)
-		if obj and obj.valid and (string.find(obj.name, "Ward") ~= nil or string.find(obj.name, "Wriggle") ~= nil or string.find(obj.name, "Trinket")) then
-			table.insert(wardsTable, obj)
-		end
-	end
+	-- Load Libs
+	VP = VPrediction()
 
 	InfoMessage("Version: ".. version .. " loaded!")
 end
@@ -210,13 +193,6 @@ function OnTick()
 	if Menu.KS.useKS then
 		KillSteal()
 		return
-	end
-
-	if Menu.Misc.WardJump.wardjumpKey then
-    		local WardPos = (GetDistanceSqr(mousePos) <= 600 * 600 and mousePos) or (Menu.Misc.WardJump.maxjump and myHero + (Vector(mousePos) - myHero):normalized()*590)
-		if WardPos then
-			WardJump(WardPos.x, WardPos.z)
-		end
 	end
 end
 
@@ -408,112 +384,6 @@ function LaneClear()
 			CastSpell(_E, cleartarget)
 		end
 	end
-end
-
-function OnCreateObj(obj)
-	if obj.valid and (string.find(obj.name, "Ward") ~= nil or string.find(obj.name, "Wriggle") ~= nil or string.find(obj.name, "Trinket")) then
-		table.insert(wardsTable, obj)
-	end
-end
-
-function OnDeleteObj(obj)
-	if obj then
-		for i, ward in pairs(wardsTable) do
-			if not ward.valid or obj.name == ward.name then
-				table.remove(wardsTable, i)
-			end
-		end
-	end
-end
-
-function WardJump(x, y, enemy)
-	if GetDistance(mousePos) and not enemy then
-		local moveToPos = myHero + (Vector(mousePos) - myHero):normalized()*300
-		myHero:MoveTo(moveToPos.x, moveToPos.z)
-	end	
-
-	if CHECKS.E then
-		local Jumped = false
-		local WardDistance = 300
-
-		--Ally jump
-		for i, ally in ipairs(GetAllyHeroes()) do
-			if ValidTarget(ally, RANGE.E, false) then
-				if GetDistanceSqr(ally, mousePos) <= WardDistance*WardDistance then
-					CastSpell(_E, ally)
-					Jumped = true
-					lastJump = GetTickCount() + 2000
-				end
-			end
-		end
-
-		-- Minions jump
-		allyMinions:update()
-		for i, minion in pairs(allyMinions.objects) do
-			if ValidTarget(minion, RANGE.E, false) then
-				if GetDistanceSqr(minion, mousePos) <= WardDistance*WardDistance then
-					CastSpell(_E, minion)
-					Jumped = true
-					lastJump = GetTickCount() + 2000
-				end
-			end
-		end
-
-		-- Ward Jump
-		for i, myWard in pairs(wardsTable) do
-			if GetDistanceSqr(mousePos) < 600 * 600 then
-				if GetDistanceSqr(myWard, mousePos) < WardDistance*WardDistance then
-					CastSpell(_E, myWard)
-					Jumped = true
-					lastJump = GetTickCount() + 2000
-				end
-			else
-				if GetDistanceSqr(myWard) < RANGE.E * RANGE.E then
-					CastSpell(_E, myWard)
-				end
-			end
-		end
-
-		if not Jumped and GetTickCount() >= lastJump then
-			local Slot = GetWardSlot()
-			if Slot ~= nil then
-				CastSpell(Slot, x, y)
-				Jumped = true
-				lastJump = GetTickCount() + 2000
-			end
-		end
-	end
-end
-
-function GetWardSlot()
-	-- Gets Slot of Available Wards --
-	local function getReadySlot(itemName)
-		for slot = 6, 12 do
-			if string.lower(myHero:GetSpellData(slot).name) == itemName and myHero:CanUseSpell(slot) then
-				return slot
-			end
-		end
-		return nil
-	end
-
-	-- Ward Priorities --
-	if getReadySlot(wards.Trinket1) ~= nil then
-		return getReadySlot(wards.Trinket1)
-	elseif getReadySlot(wards.Trinket2) ~= nil then
-		return getReadySlot(wards.Trinket2)
-	elseif getReadySlot(wards.Trinket3) ~= nil then
-		return getReadySlot(wards.Trinket3)
-	elseif getReadySlot(wards.Trinket4) ~= nil then
-		return getReadySlot(wards.Trinket4)
-	elseif getReadySlot(wards.SightWard) ~= nil then
-		return getReadySlot(wards.SightWard)
-	elseif getReadySlot(wards.VisionWard) ~= nil then
-		return getReadySlot(wards.VisionWard)
-	elseif getReadySlot(wards.SightStone) ~= nil then
-		return getReadySlot(wards.SightStone)
-	end
-
-	return nil
 end
 
 function CheckZhonya()
