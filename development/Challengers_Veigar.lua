@@ -277,8 +277,8 @@ function Combo()
 end
 
 function AutoIgnite(enemy)
-  	iDmg = ((iReady and getDmg("IGNITE", enemy, myHero)) or 0) 
-	if enemy.health <= iDmg and GetDistance(enemy) <= 600 and ignite ~= nil then
+  	iDamage = ((iReady and getDmg("IGNITE", enemy, myHero)) or 0) 
+	if enemy.health <= iDamage and GetDistance(enemy) <= 600 and ignite ~= nil then
 		if iReady then
 			CastSpell(ignite, enemy)
 		end
