@@ -35,6 +35,8 @@ local RANGE = {
 
 -- Ignite
 local ignite = nil
+local iDamage = 0
+local iReady = false
 
 -- Using Items
 local ITEMS = {
@@ -108,15 +110,13 @@ function OnLoad()
 		Menu.Combo:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 		Menu.Combo:addSubMenu("["..myHero.charName.."] - Ultimate Settings", "ultimate") 
 			Menu.Combo.ultimate:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
-			Menu.Combo.ultimate:addParam("stopclick",  "Stop (R) With Right Click", SCRIPT_PARAM_ONOFF, false)
-			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"QEWR", "EQWR"})
+			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"Aways", "If Killable"})
 
 	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
 		Menu.KS:addParam("useKS", "Use Kill Steal", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
-		Menu.KS:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
 		Menu.Farm:addParam("useQFarm", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -128,6 +128,7 @@ function OnLoad()
 		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
+		Menu.Misc:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Items Settings", "Items") 
 			Menu.Misc.Items:addParam("useZhonya", "Use Zhonya", SCRIPT_PARAM_ONOFF, true)
 			Menu.Misc.Items:addParam("zhonyaHp", "% hp to Zhonya", SCRIPT_PARAM_SLICE, 25, 0, 100, 0)
@@ -155,7 +156,11 @@ function OnLoad()
 	otherMinions = minionManager(MINION_OTHER, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	-- Ignite check
-	ignite = myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") and SUMMONER_1 or myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") and SUMMONER_2 or nil
+	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
+		ignite = SUMMONER_1
+	elseif myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") then
+		ignite = SUMMONER_2
+	end
 
 	-- Load Libs
 	VP = VPrediction()
@@ -164,10 +169,22 @@ function OnLoad()
 end
 
 function OnTick()
-	Checks()
+	ts:update()
+	target = ts.target
+
+	CHECKS.Q = (myHero:CanUseSpell(_Q) == READY)
+	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
+	CHECKS.E = (myHero:CanUseSpell(_E) == READY)
+	CHECKS.R = (myHero:CanUseSpell(_R) == READY)
+
+	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
+	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
+
+	iReady = (ignite ~= nil and myHero:CanUseSpell(ignite) == READY)
 
 	if Menu.Misc.Items.useZhonya then
 		CheckZhonya()
+		return
 	end
 
 	if Menu.Keys.comboKey then
@@ -177,6 +194,11 @@ function OnTick()
 
 	if Menu.Keys.harassKey then
 		Harass()
+		return
+	end
+
+	if Menu.Misc.ignite then
+		AutoIgnite(target)
 		return
 	end
 
@@ -196,82 +218,71 @@ function OnTick()
 	end
 end
 
-function Checks()
-	ts:update()
-	target = ts.target
-
-	CHECKS.Q = (myHero:CanUseSpell(_Q) == READY)
-	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
-	CHECKS.E = (myHero:CanUseSpell(_E) == READY)
-	CHECKS.R = (myHero:CanUseSpell(_R) == READY)
-
-	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
-	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
-end
-
 function Combo()
 	if ValidTarget(target) then
 		if Menu.Combo.ultimate.ultMode == 1 then
-			if CHECKS.Q and Menu.Combo.useQ then 
-				if GetDistance(target) <= RANGE.Q then
-					CastSpell(_Q, target) 
+			if Menu.Combo.useE then
+				if GetDistance(target) <= RANGE.E and CHECKS.E then
+					CastSpell(_E, target.x, target.z)
 				end
 			end
 
-			if CHECKS.E and Menu.Combo.useE then
-				if GetDistance(target) <= RANGE.E then
-					CastSpell(_E, target)
+			if Menu.Combo.useQ then 
+				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.Q.delay, SPELLS.Q.width, SPELLS.Q.range, SPELLS.Q.speed, myHero, false)
+				if HitChance >= 2 and CHECKS.Q and GetDistance(CastPosition) <= RANGE.Q then
+					CastSpell(_Q, CastPosition.x, CastPosition.z)
 				end
 			end
 
-
-			if CHECKS.W and Menu.Combo.useW then
-				if GetDistance(target) <= RANGE.W then
-					CastSpell(_W)
+			if Menu.Combo.useW then
+				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.W.delay, SPELLS.W.width, SPELLS.W.range, SPELLS.W.speed, myHero, false)
+				if HitChance >= 2 and CHECKS.W and GetDistance(CastPosition) <= RANGE.W then
+					CastSpell(_W, CastPosition.x, CastPosition.z)
 				end
 			end
 
-			if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR then
+			if Menu.Combo.ultimate.useR then
 				if GetDistance(target) <= RANGE.R then
-					CastSpell(_R)
+					CastSpell(_R, target)
 				end
 			end
 		elseif Menu.Combo.ultimate.ultMode == 2 then
-			if CHECKS.E and Menu.Combo.useE then
-				if GetDistance(target) <= RANGE.E then
-					CastSpell(_E, target)
+			if Menu.Combo.useE then
+				if CHECKS.E and GetDistance(target) <= RANGE.E then
+					CastSpell(_E, target.x, target.z)
 				end
 			end
 
-			if CHECKS.Q and Menu.Combo.useQ then 
-				if GetDistance(target) <= RANGE.Q then
-					CastSpell(_Q, target)
+			if Menu.Combo.useQ then 
+				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.Q.delay, SPELLS.Q.width, SPELLS.Q.range, SPELLS.Q.speed, myHero, false)
+				if HitChance >= 2 and CHECKS.Q and GetDistance(CastPosition) <= RANGE.Q then
+					CastSpell(_Q, CastPosition.x, CastPosition.z)
 				end
 			end
 
-			if CHECKS.W and Menu.Combo.useW then
-				if GetDistance(target) <= RANGE.W then
-					CastSpell(_W)
+			if Menu.Combo.useW then
+				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.W.delay, SPELLS.W.width, SPELLS.W.range, SPELLS.W.speed, myHero, false)
+				if HitChance >= 2 and CHECKS.W and GetDistance(CastPosition) <= RANGE.W then
+					CastSpell(_W, CastPosition.x, CastPosition.z)
 				end
 			end
 
-			if CHECKS.R and not CHECKS.Q and not CHECKS.W and not CHECKS.E and Menu.Combo.ultimate.useR then
-				if GetDistance(target) <= RANGE.R then
-					CastSpell(_R)
+			if Menu.Combo.ultimate.useR then
+				if CHECKS.R and GetDistance(target) <= RANGE.R and target.health < getDmg("R", target, myHero) then
+					CastSpell(_R, target)
 				end
 			end
 		end
 	end
 end
 
-function AutoIgnite()
-	if myHero:CanUseSpell(ignite) == READY then
-		for i, enemy in ipairs(GetEnemyHeroes()) do
-			if ValidTarget(enemy, 600) and enemy.health <= getDmg("IGNITE", enemy, myHero) then
-				CastSpell(ignite, enemy)
-			end
+function AutoIgnite(enemy)
+  	iDmg = ((iReady and getDmg("IGNITE", enemy, myHero)) or 0) 
+	if enemy.health <= iDmg and GetDistance(enemy) <= 600 and ignite ~= nil then
+		if iReady then
+			CastSpell(ignite, enemy)
 		end
-	end 
+	end
 end
 
 function KillSteal()
