@@ -117,8 +117,8 @@ function OnLoad()
 		Menu.KS:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
-		Menu.Farm:addParam("useQFarm", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Farm:addParam("useWFarm", "Use (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Farm:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Farm:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Lane Clear Settings", "LaneClear")
 		Menu.LaneClear:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -143,7 +143,7 @@ function OnLoad()
 	Menu.Keys:permaShow("farmKey")
 
 	-- Target Selector
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, Q.range, DAMAGE_MAGIC, true)
+	ts = TargetSelector(TARGET_MOST_AP, Q.range, DAMAGE_MAGIC, true)
 	ts.name = "[Veigar]"
 	Menu:addTS(ts)
 
@@ -304,16 +304,23 @@ end
 
 function Farm()
 	enemyMinions:update()
-	for i, minion in ipairs(enemyMinions.objects) do
-		if Menu.Farm.useQFarm then
-			if ValidTarget(minion) and GetDistance(minion) <= Q.range and CHECKS.Q and getDmg("Q", minion, myHero) > minion.health then
-				CastSpell(_Q, minion)
-			end
+	if Menu.Farm.useQ then
+		if not CHECKS.Q then
+			return
+		end
+
+		for i, minion in pairs(enemyMinions.objects) do 
+			if minion ~= nil and minion.valid and minion.team ~= myHero.team and not minion.dead and minion.visible and minion.health < getDmg("Q", minion, myHero) then
+				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(minion, Q.delay, Q.width, Q.range, Q.speed, myHero, false)
+				if HitChance >= 2 and GetDistance(CastPosition) <= Q.range and CHECKS.Q then
+					CastSpell(_Q, CastPosition.x, CastPosition.z)
+				end
+			end 
 		end
 	end
 	
 	for i, minion in ipairs(enemyMinions.objects) do
-		if Menu.Farm.useWFarm then
+		if Menu.Farm.useW then
 			if ValidTarget(minion) and GetDistance(minion) <= W.range and CHECKS.W and getDmg("W", minion, myHero) > minion.health then
 				CastSpell(_W)
 			end
