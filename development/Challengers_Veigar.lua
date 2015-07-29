@@ -22,15 +22,16 @@ if myHero.charName ~= "Veigar" then
 end
 
 -- Load Libs
-local VP = nil
-require("VPrediction")
+if FileExist(LIB_PATH .. "/VPrediction.lua") then
+	require("VPrediction")
+end
 
--- Ranges
-local RANGE = {
-	Q = 675,
-	W = 375,
-	E = 700,
-	R = 550
+-- Spells
+local SPELLS = {
+	Q = {range = 875, delay = 0.25, speed = 1200, width = 75},
+	W = {range = 900, delay = 1.25, speed = 900, width = 110},
+	E = {range = 700, delay = 0.8, speed = 730, width = 375},
+	R = {range = 700}
 }
 
 -- Ignite
@@ -145,15 +146,15 @@ function OnLoad()
 	Menu.Keys:permaShow("farmKey")
 
 	-- Target Selector
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.Q, DAMAGE_MAGIC, true)
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, SPELLS.Q.range, DAMAGE_MAGIC, true)
 	ts.name = "[Veigar]"
 	Menu:addTS(ts)
 
 	-- Minions
-	enemyMinions = minionManager(MINION_ENEMY, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
-	allyMinions = minionManager(MINION_ALLY, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
-	jungleMinions = minionManager(MINION_JUNGLE, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
-	otherMinions = minionManager(MINION_OTHER, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
+	enemyMinions = minionManager(MINION_ENEMY, SPELLS.Q.range, myHero, MINION_SORT_MAXHEALTH_DEC)
+	allyMinions = minionManager(MINION_ALLY, SPELLS.Q.range, myHero, MINION_SORT_MAXHEALTH_DEC)
+	jungleMinions = minionManager(MINION_JUNGLE, SPELLS.Q.range, myHero, MINION_SORT_MAXHEALTH_DEC)
+	otherMinions = minionManager(MINION_OTHER, SPELLS.Q.range, myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	-- Ignite check
 	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
@@ -222,53 +223,53 @@ function Combo()
 	if ValidTarget(target) then
 		if Menu.Combo.ultimate.ultMode == 1 then
 			if Menu.Combo.useE then
-				if GetDistance(target) <= RANGE.E and CHECKS.E then
+				if GetDistance(target) <= SPELLS.E.range and CHECKS.E then
 					CastSpell(_E, target.x, target.z)
 				end
 			end
 
 			if Menu.Combo.useQ then 
 				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.Q.delay, SPELLS.Q.width, SPELLS.Q.range, SPELLS.Q.speed, myHero, false)
-				if HitChance >= 2 and CHECKS.Q and GetDistance(CastPosition) <= RANGE.Q then
+				if HitChance >= 2 and CHECKS.Q and GetDistance(CastPosition) <= SPELLS.Q.range then
 					CastSpell(_Q, CastPosition.x, CastPosition.z)
 				end
 			end
 
 			if Menu.Combo.useW then
 				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.W.delay, SPELLS.W.width, SPELLS.W.range, SPELLS.W.speed, myHero, false)
-				if HitChance >= 2 and CHECKS.W and GetDistance(CastPosition) <= RANGE.W then
+				if HitChance >= 2 and CHECKS.W and GetDistance(CastPosition) <= SPELLS.W.range then
 					CastSpell(_W, CastPosition.x, CastPosition.z)
 				end
 			end
 
 			if Menu.Combo.ultimate.useR then
-				if GetDistance(target) <= RANGE.R then
+				if GetDistance(target) <= SPELLS.R.range then
 					CastSpell(_R, target)
 				end
 			end
 		elseif Menu.Combo.ultimate.ultMode == 2 then
 			if Menu.Combo.useE then
-				if CHECKS.E and GetDistance(target) <= RANGE.E then
+				if CHECKS.E and GetDistance(target) <= SPELLS.E.range then
 					CastSpell(_E, target.x, target.z)
 				end
 			end
 
 			if Menu.Combo.useQ then 
 				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.Q.delay, SPELLS.Q.width, SPELLS.Q.range, SPELLS.Q.speed, myHero, false)
-				if HitChance >= 2 and CHECKS.Q and GetDistance(CastPosition) <= RANGE.Q then
+				if HitChance >= 2 and CHECKS.Q and GetDistance(CastPosition) <= SPELLS.Q.range then
 					CastSpell(_Q, CastPosition.x, CastPosition.z)
 				end
 			end
 
 			if Menu.Combo.useW then
 				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, SPELLS.W.delay, SPELLS.W.width, SPELLS.W.range, SPELLS.W.speed, myHero, false)
-				if HitChance >= 2 and CHECKS.W and GetDistance(CastPosition) <= RANGE.W then
+				if HitChance >= 2 and CHECKS.W and GetDistance(CastPosition) <= SPELLS.W.range then
 					CastSpell(_W, CastPosition.x, CastPosition.z)
 				end
 			end
 
 			if Menu.Combo.ultimate.useR then
-				if CHECKS.R and GetDistance(target) <= RANGE.R and target.health < getDmg("R", target, myHero) then
+				if CHECKS.R and GetDistance(target) <= SPELLS.R.range and target.health < getDmg("R", target, myHero) then
 					CastSpell(_R, target)
 				end
 			end
@@ -320,19 +321,19 @@ function Harass()
 
 	if ValidTarget(target) then
 		if CHECKS.E and Menu.Harass.useE then
-			if GetDistance(target) <= RANGE.E then
+			if GetDistance(target) <= SPELLS.E.range then
 				CastSpell(_E, target)
 			end
 		end
 
 		if CHECKS.Q and Menu.Harass.useQ then 
-			if GetDistance(target) <= RANGE.Q then
+			if GetDistance(target) <= SPELLS.Q.range then
 				CastSpell(_Q, target) 
 			end
 		end
 
 		if CHECKS.W and Menu.Harass.useW then
-			if GetDistance(target) <= RANGE.W then
+			if GetDistance(target) <= SPELLS.W.range then
 				CastSpell(_W)
 			end
 		end
@@ -343,7 +344,7 @@ function Farm()
 	enemyMinions:update()
 	for i, minion in ipairs(enemyMinions.objects) do
 		if Menu.Farm.useQFarm then
-			if ValidTarget(minion) and GetDistance(minion) <= RANGE.Q and CHECKS.Q and getDmg("Q", minion, myHero) > minion.health then
+			if ValidTarget(minion) and GetDistance(minion) <= SPELLS.Q.range and CHECKS.Q and getDmg("Q", minion, myHero) > minion.health then
 				CastSpell(_Q, minion)
 			end
 		end
@@ -351,7 +352,7 @@ function Farm()
 	
 	for i, minion in ipairs(enemyMinions.objects) do
 		if Menu.Farm.useWFarm then
-			if ValidTarget(minion) and GetDistance(minion) <= RANGE.W and CHECKS.W and getDmg("W", minion, myHero) > minion.health then
+			if ValidTarget(minion) and GetDistance(minion) <= SPELLS.W.range and CHECKS.W and getDmg("W", minion, myHero) > minion.health then
 				CastSpell(_W)
 			end
 		end
@@ -440,15 +441,15 @@ end
 
 function OnDraw()
 	if Menu.Draw.drawQ and CHECKS.Q then
-		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.Q, ARGB(255, 51, 153, 255))
+		DrawCircle(myHero.x, myHero.y, myHero.z, SPELLS.Q.range, ARGB(255, 51, 153, 255))
 	end
 
 	if Menu.Draw.drawW and CHECKS.W then
-		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.W, ARGB(255, 102, 178 , 0 ))
+		DrawCircle(myHero.x, myHero.y, myHero.z, SPELLS.W.range, ARGB(255, 102, 178 , 0 ))
 	end
 
 	if Menu.Draw.drawE and CHECKS.E then
-		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.E, ARGB(255, 178, 0 , 0 ))
+		DrawCircle(myHero.x, myHero.y, myHero.z, SPELLS.E.range, ARGB(255, 178, 0 , 0 ))
 	end
 
 end
