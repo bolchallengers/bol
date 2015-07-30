@@ -10,8 +10,8 @@
 
 	Changelog!
 	Version: 1.0
-		* Costomizable Key Settings.
-		* Costomizable Harass, use Q, W, E.
+		* Customizable Key Settings.
+		* Customizable Harass, use Q, W.
 		* Customizable Full combo.
 		* Customizable KS settings using skills.
 		* Customizable farm with Q.
@@ -102,7 +102,6 @@ function OnLoad()
 	Menu:addSubMenu("["..myHero.charName.."] - Harass Settings", "Harass")
 		Menu.Harass:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.Harass:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
-		Menu.Harass:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
 		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -111,7 +110,6 @@ function OnLoad()
 		Menu.Combo:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
 	
 	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
-		Menu.KS:addParam("useKS", "Use Kill Steal", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
@@ -123,7 +121,6 @@ function OnLoad()
 	Menu:addSubMenu("["..myHero.charName.."] - Lane Clear Settings", "LaneClear")
 		Menu.LaneClear:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.LaneClear:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
-		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
 		Menu.Misc:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
@@ -206,9 +203,7 @@ function OnTick()
 		LaneClear()
 	end
 
-	if Menu.KS.useKS then
-		KillSteal()
-	end
+	KillSteal()
 end
 
 function Combo()
@@ -277,17 +272,7 @@ function KillSteal()
 end
 
 function Harass()
-	if not target then
-		return
-	end
-
 	if ValidTarget(target) then
-		if CHECKS.E and Menu.Harass.useE then
-			if GetDistance(target) <= E.range then
-				CastSpell(_E, target)
-			end
-		end
-
 		if CHECKS.Q and Menu.Harass.useQ then 
 			if GetDistance(target) <= Q.range then
 				CastSpell(_Q, target) 
@@ -359,10 +344,6 @@ function LaneClear()
 
 		if Menu.LaneClear.useW then
 			CastSpell(_W, cleartarget)
-		end
-
-		if Menu.LaneClear.useE then
-			CastSpell(_E, cleartarget)
 		end
 	end
 end
