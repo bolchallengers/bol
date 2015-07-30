@@ -190,9 +190,7 @@ function OnTick()
 	end
 
 	if ValidTarget(target) then
-		if Menu.Misc.ignite then
-			AutoIgnite(target)
-		end
+		KillSteal(target)
 	end
 
 	if Menu.Keys.farmKey then
@@ -202,15 +200,13 @@ function OnTick()
 	if Menu.Keys.clearKey then
 		LaneClear()
 	end
-
-	KillSteal()
 end
 
 function Combo()
 	if ValidTarget(target) then
 		if CHECKS.E and Menu.Combo.useE then
-		    local CastPosition, MainTargetHitChance, nTargets = VP:GetCircularCastPosition(target, E.delay, E.width, E.range, E.speed, myHero, false)
-			if MainTargetHitChance >= 2 and GetDistance(CastPosition) <= E.range and CHECKS.E then
+		    local CastPosition, HitChance, nTargets = VP:GetCircularCastPosition(target, E.delay, E.width, E.range, E.speed, myHero, false)
+			if HitChance >= 2 and GetDistance(CastPosition) <= E.range and CHECKS.E then
 				CastSpell(_E, CastPosition.x, CastPosition.z)
 		    end
 		end
@@ -221,8 +217,8 @@ function Combo()
 			end
 		end
 		if CHECKS.W and Menu.Combo.useW then
-			local CastPosition, MainTargetHitChance, nTargets = VP:GetCircularCastPosition(target, W.delay, W.width, W.range, W.speed, myHero, false)
-			if MainTargetHitChance >= 2 and GetDistance(CastPosition) <= W.range and CHECKS.W then
+			local CastPosition, HitChance, nTargets = VP:GetCircularCastPosition(target, W.delay, W.width, W.range, W.speed, myHero, false)
+			if HitChance >= 2 and GetDistance(CastPosition) <= W.range and CHECKS.W then
 				CastSpell(_W, CastPosition.x, CastPosition.z)
 			end
 		end		
@@ -243,30 +239,28 @@ function AutoIgnite(enemy)
 	end
 end
 
-function KillSteal()
-	for i, enemy in ipairs(GetEnemyHeroes()) do
-		if ValidTarget(enemy) and GetDistance(enemy) < 700 then
-			if Menu.KS.useQ then
-				if CHECKS.Q and getDmg("Q", enemy, myHero) > enemy.health then
-					CastSpell(_Q, enemy)
-				end
+function KillSteal(enemy)
+	if ValidTarget(enemy) and GetDistance(enemy) < 700 then
+		if Menu.KS.useQ then
+			if CHECKS.Q and getDmg("Q", enemy, myHero) > enemy.health then
+				CastSpell(_Q, enemy)
 			end
+		end
 
-			if Menu.KS.useW then
-				if CHECKS.W and getDmg("W", enemy, myHero) > enemy.health then
-					CastSpell(_W)
-				end
+		if Menu.KS.useW then
+			if CHECKS.W and getDmg("W", enemy, myHero) > enemy.health then
+				CastSpell(_W)
 			end
+		end
 			
-			if Menu.KS.useE then
-				if CHECKS.E and getDmg("E", enemy, myHero) > enemy.health then
-					CastSpell(_E, enemy)
-				end
+		if Menu.KS.useE then
+			if CHECKS.E and getDmg("E", enemy, myHero) > enemy.health then
+				CastSpell(_E, enemy)
 			end
+		end
 
-			if Menu.KS.ignite and ignite ~= nil then
-				AutoIgnite()
-			end
+		if Menu.Misc.ignite then
+			AutoIgnite(enemy)
 		end
 	end
 end
@@ -274,14 +268,16 @@ end
 function Harass()
 	if ValidTarget(target) then
 		if CHECKS.Q and Menu.Harass.useQ then 
-			if GetDistance(target) <= Q.range then
-				CastSpell(_Q, target) 
+			local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(target, Q.delay, Q.width, Q.range, Q.speed, myHero, false)
+			if HitChance >= 2 and GetDistance(CastPosition) <= Q.range and CHECKS.Q then
+				CastSpell(_Q, CastPosition.x, CastPosition.z)
 			end
 		end
 
 		if CHECKS.W and Menu.Harass.useW then
-			if GetDistance(target) <= W.range then
-				CastSpell(_W)
+			local CastPosition, HitChance, nTargets = VP:GetCircularCastPosition(target, W.delay, W.width, W.range, W.speed, myHero, false)
+			if HitChance >= 2 and GetDistance(CastPosition) <= W.range and CHECKS.W then
+				CastSpell(_W, CastPosition.x, CastPosition.z)
 			end
 		end
 	end
@@ -303,12 +299,19 @@ function Farm()
 			end 
 		end
 	end
-	
-	for i, minion in ipairs(enemyMinions.objects) do
-		if Menu.Farm.useW then
-			if ValidTarget(minion) and GetDistance(minion) <= W.range and CHECKS.W and getDmg("W", minion, myHero) > minion.health then
-				CastSpell(_W)
-			end
+
+	if Menu.Farm.useW then
+		if not CHECKS.W then
+			return
+		end
+
+		for i, minion in pairs(enemyMinions.objects) do 
+			if minion ~= nil and minion.valid and minion.team ~= myHero.team and not minion.dead and minion.visible and minion.health < getDmg("Q", minion, myHero) then
+				local CastPosition, HitChance, CastPos = VP:GetLineCastPosition(minion, W.delay, W.width, W.range, W.speed, myHero, false)
+				if HitChance >= 2 and GetDistance(CastPosition) <= W.range and CHECKS.Q then
+					CastSpell(_W, CastPosition.x, CastPosition.z)
+				end
+			end 
 		end
 	end
 end
