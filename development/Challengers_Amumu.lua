@@ -484,3 +484,22 @@ function OnDraw()
 		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.E, ARGB(255, 178, 0 , 0 ))
 	end
 end
+
+function GetSlotItem(id, unit)
+	
+	unit 		= unit or myHero
+
+	if (not ItemNames[id]) then
+		return ___GetInventorySlotItem(id, unit)
+	end
+
+	local name	= ItemNames[id]
+	
+	for slot = ITEM_1, ITEM_7 do
+		local item = unit:GetSpellData(slot).name
+		if ((#item > 0) and (item:lower() == name:lower())) then
+			return slot
+		end
+	end
+
+end
