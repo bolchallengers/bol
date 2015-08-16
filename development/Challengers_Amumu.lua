@@ -9,6 +9,9 @@
 	========================================================================
 
 	Changelog!
+	Version: 1.2
+		* Add SxOrbWalk.
+
 	Version: 1.1
 		* Fix Auto Smite.
 		* Now you can enable or disable auto updates.
@@ -36,15 +39,9 @@ if FileExist(LIB_PATH .. "/VPrediction.lua") then
 	require("VPrediction")
 end
 
--- Info
-local version = 1.1
-
--- Updater
-local UPDATE_HOST = "raw.githubusercontent.com"
-local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Amumu.lua".."?rand="..math.random(1,10000)
-local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
-local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
-local UPDATE_SCRIPT = true
+if FileExist(LIB_PATH .. "/SxOrbWalk.lua") then
+	require("SxOrbWalk")
+end
 
 -- Variables
 local VARS = {
@@ -82,8 +79,16 @@ local CHECKS = {
 -- Target selector
 local ts = nil
 
+-- Updater
+local UPDATE_HOST = "raw.githubusercontent.com"
+local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Amumu.lua".."?rand="..math.random(1,10000)
+local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
+local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
+local UPDATE_SCRIPT = true
+local version = 1.2
+
 function InfoMessage(msg)
-	print("<font color=\"#6699ff\"><b>Challengers Amumu:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
+	print("<font color=\"#FF9A00\"><b>Challengers Amumu:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
 end
 
 function UpdateScript()
@@ -114,7 +119,7 @@ function OnLoad()
 	Menu = scriptConfig("Challengers Amumu", "Amumu")
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-		Menu.Keys:addParam("clearKey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("J"))
+		Menu.Keys:addParam("clearKey", "Jungle Clear", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("X"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
 		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -144,6 +149,10 @@ function OnLoad()
 		Menu.Draw:addParam("drawQ", "Draw (Q)", SCRIPT_PARAM_ONOFF, true)
 		Menu.Draw:addParam("drawW", "Draw (W)", SCRIPT_PARAM_ONOFF, true)
 		Menu.Draw:addParam("drawE", "Draw (E)", SCRIPT_PARAM_ONOFF, true)
+
+	-- Load Orbwalking
+	Menu:addSubMenu("Orbwalker Settings", "orbwalker")
+	SxOrb:LoadToMenu(Menu.orbwalker)
 
 	-- Perma Shows
 	Menu.Keys:permaShow("comboKey")
