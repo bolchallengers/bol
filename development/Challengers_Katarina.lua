@@ -9,6 +9,10 @@
 	========================================================================
 
 	Changelog!
+	Version: 1.3
+		* Rework Kill Steal code.
+		* Ignite work (It have some bugs)
+
 	Version: 1.2
 		* Rework range code.
 		* Fix kill steal usage.
@@ -32,9 +36,6 @@ if myHero.charName ~= "Katarina" then
 	return
 end
 
--- Info
-local version = 1.2
-
 -- Ult Helper
 local ULT = {
 	using  = false,
@@ -51,6 +52,8 @@ local RANGE = {
 
 -- Ignite
 local ignite = nil
+local dmgIgnite = 0
+local igniteReady= false
 
 -- Ward Jump by Skeem
 local lastJump = 0
@@ -78,13 +81,16 @@ local CHECKS = {
 	R = false
 }
 
+-- Kill Steal
+local enemyhealth = 0
+
 -- Updater
 local UPDATE_HOST = "raw.githubusercontent.com"
 local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Katarina.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
 local UPDATE_SCRIPT = true
-local version = 1.2
+local version = 1.3
 
 function InfoMessage(msg)
 	print("<font color=\"#FF9A00\"><b>Challengers Katarina:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
@@ -119,14 +125,14 @@ function OnLoad()
 
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("M"))
+		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("M"))
 		Menu.Keys:addParam("farmKey", "Farm On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("N"))
 		Menu.Keys:addParam("clearKey", "Lane Clear On/Off", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("L"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Harass Settings", "Harass")
 		Menu.Harass:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Harass:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true) 
-		Menu.Harass:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Harass:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, false) 
+		Menu.Harass:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, false)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Combo Settings", "Combo")
 		Menu.Combo:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -138,10 +144,6 @@ function OnLoad()
 			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"QEWR", "EQWR"})
 
 	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
-		Menu.KS:addParam("useKS", "Use Kill Steal", SCRIPT_PARAM_ONOFF, true)
-		Menu.KS:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.KS:addParam("useW", "Use (W)", SCRIPT_PARAM_ONOFF, true)
-		Menu.KS:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
@@ -184,7 +186,11 @@ function OnLoad()
 	otherMinions = minionManager(MINION_OTHER, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	-- Ignite check
-	ignite = myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") and SUMMONER_1 or myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") and SUMMONER_2 or nil
+	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
+		ignite = SUMMONER_1
+	elseif myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") then
+		ignite = SUMMONER_2
+	end
 
 	-- Override Globals Credits to Aroc :3
 	_G.myHero.SaveMove = _G.myHero.MoveTo
@@ -232,8 +238,8 @@ function OnTick()
 		LaneClear()
 	end
 
-	if Menu.KS.useKS then
-		KillSteal()
+	if ValidTarget(target) then
+		KillSteal(target)
 	end
 
 	if Menu.Misc.WardJump.wardjumpKey then
@@ -252,6 +258,8 @@ function Checks()
 	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
 	CHECKS.E = (myHero:CanUseSpell(_E) == READY)
 	CHECKS.R = (myHero:CanUseSpell(_R) == READY)
+
+	igniteReady = (ignite ~= nil and myHero:CanUseSpell(ignite) == READY)
 
 	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
 	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
@@ -342,41 +350,58 @@ function OnRemoveBuff(unit, buff)
 	end
 end
 
-function AutoIgnite()
-	if myHero:CanUseSpell(ignite) == READY then
-		for i, enemy in ipairs(GetEnemyHeroes()) do
-			if ValidTarget(enemy, 600) and enemy.health <= getDmg("IGNITE", enemy, myHero) then
-				CastSpell(ignite, enemy)
-			end
+function AutoIgnite(enemy)
+  	dmgIgnite = ((igniteReady  and getDmg("IGNITE", enemy, myHero)) or 0) 
+	if enemy.health <= dmgIgnite and GetDistance(enemy) <= 600 and ignite ~= nil then
+		if igniteReady then
+			CastSpell(ignite, enemy)
 		end
-	end 
+	end
 end
 
-function KillSteal()
-	for i, enemy in ipairs(GetEnemyHeroes()) do
-		if ValidTarget(enemy) and GetDistance(enemy) < 700 then
-			if Menu.KS.useQ then
-				if CHECKS.Q and getDmg("Q", enemy, myHero) > enemy.health then
-					CastSpell(_Q, enemy)
-				end
-			end
+function KillSteal(enemy)
+	if GetDistance(enemy) < 700 and ValidTarget(enemy) and not TargetHaveBuff("willrevive", enemy) and not TargetHaveBuff("UndyingRage", enemy) then
+		enemyhealth = enemy.health
+		local eDmg = myHero:CalcMagicDamage(enemy, 25 * (myHero:GetSpellData(_E).level - 1) + 60 + (.4 * myHero.ap))
+		local wDmg = myHero:CalcMagicDamage(enemy, 35 * (myHero:GetSpellData(_W).level - 1) + 40 + (.25 * myHero.ap) + (.6 * myHero.addDamage))
+		local qDmg = myHero:CalcMagicDamage(enemy, 25 * (myHero:GetSpellData(_Q).level - 1) + 60 + (.45 * myHero.ap))
 
-			if Menu.KS.useW then
-				if CHECKS.W and getDmg("W", enemy, myHero) > enemy.health then
-					CastSpell(_W)
-				end
-			end
-			
-			if Menu.KS.useE then
-				if CHECKS.E and getDmg("E", enemy, myHero) > enemy.health then
-					CastSpell(_E, enemy)
-				end
-			end
-
-			if Menu.KS.ignite and ignite ~= nil then
-				AutoIgnite()
-			end
+		if enemyhealth < qDmg and GetDistance(enemy) < RANGE.Q and CHECKS.Q then
+			CastSpell(_Q, enemy)
+			CastSpell(_W)
+		elseif enemyhealth < eDmg and GetDistance(enemy) < RANGE.E and CHECKS.E then
+			CastSpell(_E, enemy)
+		elseif enemyhealth < wDmg + eDmg and GetDistance(enemy) < 700 and CHECKS.E and CHECKS.W then
+			CastSpell(_E, enemy)
+			CastSpell(_W)
+		elseif enemyhealth < wDmg and GetDistance(enemy) < RANGE.W and CHECKS.W then
+			CastSpell(_W)
+		elseif GetDistance(enemy) < 300 and enemyhealth < qDmg + wDmg and CHECKS.Q and CHECKS.W then
+			CastSpell(_Q, enemy)
+			CastSpell(_W)
+		elseif GetDistance(enemy) < 375 and GetDistance(enemy) > 300 and enemyhealth < qDmg + wDmg and CHECKS.Q and CHECKS.W then 
+			CastSpell(_W)
+			CastSpell(_Q, enemy)
+		elseif GetDistance(enemy) < 700 and GetDistance(enemy) > 600 and enemyhealth < qDmg + eDmg and CHECKS.Q and CHECKS.E then 
+			CastSpell(_E, enemy)
+			CastSpell(_Q, enemy)
+		elseif GetDistance(enemy) < 600 and enemyhealth < qDmg + eDmg and CHECKS.Q and CHECKS.E then 
+			CastSpell(_Q, enemy)
+			CastSpell(_E, enemy)
+		elseif GetDistance(enemy) < 700 and GetDistance(enemy) > 600 and enemyhealth < wDmg + eDmg + qDmg and CHECKS.Q and CHECKS.E and CHECKS.W then
+			CastSpell(_E, enemy)
+			CastSpell(_Q, enemy)	
+			CastSpell(_W)
+		elseif GetDistance(enemy) < 600 and enemyhealth < wDmg + eDmg + qDmg and CHECKS.Q and CHECKS.E and CHECKS.W then
+			CastSpell(_Q, enemy)
+			CastSpell(_E, enemy)
+			CastSpell(_W)
 		end
+
+		if Menu.KS.ignite then
+			AutoIgnite(enemy)
+		end
+		enemy = nil
 	end
 end
 
