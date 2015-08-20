@@ -77,8 +77,8 @@ local UPDATE_HOST = "raw.githubusercontent.com"
 local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Karthus.lua".."?rand="..math.random(1,10000)
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
-local UPDATE_SCRIPT = true
-local version = 1.3
+local UPDATE_SCRIPT = false
+local version = 1.0
 
 function InfoMessage(msg)
 	print("<font color=\"#FF9A00\"><b>Challengers Karthus:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
@@ -219,15 +219,13 @@ function OnLoad()
 		Menu.Combo:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 		Menu.Combo:addSubMenu("["..myHero.charName.."] - Ultimate Settings", "ultimate") 
 			Menu.Combo.ultimate:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
-			Menu.Combo.ultimate:addParam("stopclick",  "Stop (R) With Right Click", SCRIPT_PARAM_ONOFF, false)
 			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"QEWR", "EQWR"})
 
 	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
 		Menu.KS:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
-		Menu.Farm:addParam("useQFarm", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
-		Menu.Farm:addParam("useWFarm", "Use (W)", SCRIPT_PARAM_ONOFF, true)
+		Menu.Farm:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Lane Clear Settings", "LaneClear")
 		Menu.LaneClear:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -254,15 +252,15 @@ function OnLoad()
 	Menu.Keys:permaShow("farmKey")
 
 	-- Target Selector
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E)
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E, DAMAGE_MAGIC, false)
 	ts.name = "[Karthus]"
 	Menu:addTS(ts)
 
 	-- Minions
-	enemyMinions = minionManager(MINION_ENEMY, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
-	allyMinions = minionManager(MINION_ALLY, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
-	jungleMinions = minionManager(MINION_JUNGLE, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
-	otherMinions = minionManager(MINION_OTHER, RANGE.E, myHero, MINION_SORT_MAXHEALTH_DEC)
+	enemyMinions = minionManager(MINION_ENEMY, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
+	allyMinions = minionManager(MINION_ALLY, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
+	jungleMinions = minionManager(MINION_JUNGLE, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
+	otherMinions = minionManager(MINION_OTHER, RANGE.Q, myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	-- Ignite check
 	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
@@ -270,15 +268,6 @@ function OnLoad()
 	elseif myHero:GetSpellData(SUMMONER_2).name:find("summonerdot") then
 		ignite = SUMMONER_2
 	end
-
-	-- Override Globals Credits to Aroc :3
-	_G.myHero.SaveMove = _G.myHero.MoveTo
-	_G.myHero.SaveAttack = _G.myHero.Attack
-	_G.myHero.MoveTo = function(...) if not ULT.using then _G.myHero.SaveMove(...) end end
-	_G.myHero.Attack = function(...) if not ULT.using then _G.myHero.SaveAttack(...) end end
-
-	-- Callbacks
-	AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) 	OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
 
 	-- Wards
 	wardsTable = {}
@@ -301,12 +290,10 @@ function OnTick()
 
 	if Menu.Keys.comboKey then
 		Combo()
-		return
 	end
 
 	if Menu.Keys.harassKey then
 		Harass()
-		return
 	end
 
 	if Menu.Keys.farmKey then
@@ -342,13 +329,6 @@ function Checks()
 
 	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
 	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
-
-	if ULT.using then
-		if (os.clock() - ULT.last) > 2.5 then
-			ULT.using = false
-			ULT.last  = 0
-		end
-	end
 end
 
 function Combo()
@@ -406,27 +386,8 @@ function Combo()
 	end
 end
 
-function OnWndMsg(msg, key)
-	if Menu.Combo.ultimate.stopclick then
-		if msg == WM_RBUTTONDOWN and ULT.using then 
-			ULT.using = false
-		end
-	end
-end
-
-
-function OnCastSpell(iSpell,startPos,endPos,targetUnit)
-	if iSpell == 3 then
-		ULT.using = true
-		ULT.last  = os.clock()
-	end
-end
-
 function OnRemoveBuff(unit, buff)
-	if unit.isMe and buff.name == "Karthusrsound" then
-		ULT.using = false
-		ULT.last  = 0
-	end
+
 end
 
 function AutoIgnite(enemy)
@@ -513,7 +474,7 @@ end
 function Farm()
 	enemyMinions:update()
 	for i, minion in ipairs(enemyMinions.objects) do
-		if Menu.Farm.useQFarm then
+		if Menu.Farm.useQ then
 			if ValidTarget(minion) and GetDistance(minion) <= RANGE.Q and CHECKS.Q and getDmg("Q", minion, myHero) > minion.health then
 				CastSpell(_Q, minion)
 			end
