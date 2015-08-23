@@ -12,6 +12,7 @@
 	Version: 1.4
 		* Fix ignite.
 		* Add SxOrbwalk.
+		* Add humanizer for E, Credits to Skeem.
 
 	Version: 1.3
 		* Rework Kill Steal code.
@@ -42,12 +43,10 @@ if myHero.charName ~= "Katarina" then
 end
 
 -- HELPERS
-local itemCastingFix = false -- CHANGE THIS TRUE OR FALSE IF BOL IS SUPPORTING ITEMS OR NOT
-
--- Ult Helper
-local ULT = {
-	using  = false,
-	last = 0
+local HELPERS = {
+	E = {last = 0, delay = 0, canuse = true},
+	R = {using  = false, last = 0},
+	itemCastingFix = false -- CHANGE THIS TRUE OR FALSE IF BOL IS SUPPORTING ITEMS OR NOT
 }
 
 -- Ranges
@@ -123,7 +122,7 @@ function UpdateScript()
 end
 
 function fixItems()
-	if itemCastingFix then
+	if HELPERS.itemCastingFix then
 		ItemNames = {
 			[3303]	= "ArchAngelsDummySpell",
 			[3007]	= "ArchAngelsDummySpell",
@@ -263,6 +262,9 @@ function OnLoad()
 		Menu.LaneClear:addParam("useE", "Use (E)", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
+		Menu.Misc:addSubMenu("["..myHero.charName.."] - Humanizer Settings", "humanizer")
+			Menu.Misc.humanizer:addParam("useDelay", "Use Delay on (E)", SCRIPT_PARAM_ONOFF, true)
+			Menu.Misc.humanizer:addParam("delay", "Delay (E)", SCRIPT_PARAM_SLICE, 1.5, 0, 3, 1)
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Ward Jump Settings", "WardJump") 
 			Menu.Misc.WardJump:addParam('wardjumpKey', 'Ward Jump Key',  SCRIPT_PARAM_ONKEYDOWN, false, string.byte("H"))
 			Menu.Misc.WardJump:addParam("maxjump", "Always Ward Jump at Max Range", SCRIPT_PARAM_ONOFF, true)
@@ -302,8 +304,8 @@ function OnLoad()
 	-- Override Globals Credits to Aroc :3
 	_G.myHero.SaveMove = _G.myHero.MoveTo
 	_G.myHero.SaveAttack = _G.myHero.Attack
-	_G.myHero.MoveTo = function(...) if not ULT.using then _G.myHero.SaveMove(...) end end
-	_G.myHero.Attack = function(...) if not ULT.using then _G.myHero.SaveAttack(...) end end
+	_G.myHero.MoveTo = function(...) if not HELPERS.R.using then _G.myHero.SaveMove(...) end end
+	_G.myHero.Attack = function(...) if not HELPERS.R.using then _G.myHero.SaveAttack(...) end end
 
 	-- Callbacks
 	AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
@@ -360,17 +362,25 @@ function OnTick()
 		LaneClear()
 	end
 
-	if ULT.using then
-		if (os.clock() - ULT.last) > 2.5 then
-			ULT.using = false
-			ULT.last  = 0
-		end
-	end
-
 	if Menu.Misc.WardJump.wardjumpKey then
     		local WardPos = (GetDistanceSqr(mousePos) <= 600 * 600 and mousePos) or (Menu.Misc.WardJump.maxjump and myHero + (Vector(mousePos) - myHero):normalized()*590)
 		if WardPos then
 			WardJump(WardPos.x, WardPos.z)
+		end
+	end
+
+	if HELPERS.R.using then
+		if (os.clock() - HELPERS.R.last) > 2.5 then
+			HELPERS.R.using = false
+			HELPERS.R.last  = 0
+		end
+	end
+
+	if Menu.Misc.humanizer.useDelay then
+		if not HELPERS.E.canuse then
+			if (os.clock() - HELPERS.E.last) > HELPERS.E.delay then
+				HELPERS.E.canuse = true
+			end
 		end
 	end
 end
@@ -432,8 +442,8 @@ end
 
 function OnWndMsg(msg, key)
 	if Menu.Combo.ultimate.stopclick then
-		if msg == WM_RBUTTONDOWN and ULT.using then 
-			ULT.using = false
+		if msg == WM_RBUTTONDOWN and HELPERS.R.using then 
+			HELPERS.R.using = false
 		end
 	end
 end
@@ -441,15 +451,25 @@ end
 
 function OnCastSpell(iSpell,startPos,endPos,targetUnit)
 	if iSpell == 3 then
-		ULT.using = true
-		ULT.last  = os.clock()
+		HELPERS.R.using = true
+		HELPERS.R.last  = os.clock()
+	end
+end
+
+function OnProcessSpell(unit, spell)
+	if unit.isMe then
+		if  Menu.Misc.humanizer.useDelay and spell.name == "KatarinaE" then
+			HELPERS.E.last   = os.clock()
+			HELPERS.E.delay  = random(0, Menu.Misc.humanizer.delay, 2)
+			HELPERS.E.canuse = false
+		end
 	end
 end
 
 function OnRemoveBuff(unit, buff)
 	if unit.isMe and buff.name == "katarinarsound" then
-		ULT.using = false
-		ULT.last  = 0
+		HELPERS.R.using = false
+		HELPERS.R.last  = 0
 	end
 end
 
@@ -768,4 +788,13 @@ function GetSlotItem(id, unit)
 			return slot
 		end
 	end
+end
+
+function random(min, max, precision)
+	local precision = precision or 0
+	local num = math.random()
+	local range = math.abs(max - min)
+	local offset = range * num
+	local randomnum = min + offset
+	return math.floor(randomnum * math.pow(10, precision) + 0.5) / math.pow(10, precision)
 end
