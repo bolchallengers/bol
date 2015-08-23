@@ -9,6 +9,10 @@
 	========================================================================
 
 	Changelog!
+	Version: 1.4
+		* Fix ignite.
+		* Add SxOrbwalk.
+
 	Version: 1.3
 		* Rework Kill Steal code.
 		* Ignite work (It have some bugs)
@@ -38,7 +42,7 @@ if myHero.charName ~= "Katarina" then
 end
 
 -- HELPERS
-local itemCastingFix = true -- CHANGE THIS TRUE OR FALSE IF BOL IS SUPPORTING ITEMS OR NOT
+local itemCastingFix = false -- CHANGE THIS TRUE OR FALSE IF BOL IS SUPPORTING ITEMS OR NOT
 
 -- Ult Helper
 local ULT = {
@@ -56,8 +60,6 @@ local RANGE = {
 
 -- Ignite
 local ignite = nil
-local dmgIgnite = 0
-local igniteReady= false
 
 -- Ward Jump by Skeem
 local lastJump = 0
@@ -94,7 +96,7 @@ local UPDATE_PATH = "/bolchallengers/bol/master/scripts/Challengers_Katarina.lua
 local UPDATE_FILE_PATH = SCRIPT_PATH .. GetCurrentEnv().FILE_NAME
 local UPDATE_URL = "https://"..UPDATE_HOST..UPDATE_PATH
 local UPDATE_SCRIPT = true
-local version = 1.3
+local version = 1.4
 
 function InfoMessage(msg)
 	print("<font color=\"#FF9A00\"><b>Challengers Katarina:</b></font> <font color=\"#FFFFFF\">"..msg..".</font>")
@@ -208,6 +210,12 @@ function fixItems()
 	end
 end
 
+
+-- Load Libs
+if FileExist(LIB_PATH .. "/SxOrbWalk.lua") then
+	require("SxOrbWalk")
+end
+
 function OnLoad()
 	-- Check Update
 	UpdateScript()
@@ -217,6 +225,9 @@ function OnLoad()
 
 	-- Load Menu
 	Menu = scriptConfig("Challengers Katarina", "Katarina")
+
+	Menu:addSubMenu("["..myHero.charName.."] - Orbwalk Settings", "orbwalk")
+		SxOrb:LoadToMenu(Menu.orbwalk)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
@@ -236,9 +247,10 @@ function OnLoad()
 		Menu.Combo:addSubMenu("["..myHero.charName.."] - Ultimate Settings", "ultimate") 
 			Menu.Combo.ultimate:addParam("useR", "Use (R)", SCRIPT_PARAM_ONOFF, true)
 			Menu.Combo.ultimate:addParam("stopclick",  "Stop (R) With Right Click", SCRIPT_PARAM_ONOFF, false)
-			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 2, {"QEWR", "EQWR"})
+			Menu.Combo.ultimate:addParam("ultMode", "Ultimate Mode", SCRIPT_PARAM_LIST, 1, {"QEWR", "EQWR"})
 
 	Menu:addSubMenu("["..myHero.charName.."] - KS Settings", "KS")
+		Menu.KS:addParam("useKS", "Use Kill Steal", SCRIPT_PARAM_ONOFF, true)
 		Menu.KS:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
@@ -270,7 +282,7 @@ function OnLoad()
 	Menu.Keys:permaShow("farmKey")
 
 	-- Target Selector
-	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E)
+	ts = TargetSelector(TARGET_LOW_HP_PRIORITY, RANGE.E, DAMAGE_MAGIC, true)
 	ts.name = "[Katarina]"
 	Menu:addTS(ts)
 
@@ -294,7 +306,7 @@ function OnLoad()
 	_G.myHero.Attack = function(...) if not ULT.using then _G.myHero.SaveAttack(...) end end
 
 	-- Callbacks
-	AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) 	OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
+	AddCastSpellCallback(function(iSpell, startPos, endPos, targetUnit) OnCastSpell(iSpell,startPos,endPos,targetUnit) end)
 
 	-- Wards
 	wardsTable = {}
@@ -309,7 +321,16 @@ function OnLoad()
 end
 
 function OnTick()
-	Checks()
+	ts:update()
+	target = ts.target
+
+	CHECKS.Q = (myHero:CanUseSpell(_Q) == READY)
+	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
+	CHECKS.E = (myHero:CanUseSpell(_E) == READY)
+	CHECKS.R = (myHero:CanUseSpell(_R) == READY)
+
+	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
+	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
 
 	if Menu.Misc.Items.useZhonya then
 		CheckZhonya()
@@ -317,12 +338,18 @@ function OnTick()
 
 	if Menu.Keys.comboKey then
 		Combo()
-		return
+	end
+
+	if Menu.KS.useKS then
+		KillSteal()
+	end
+
+	if Menu.KS.ignite and ignite ~= nil then
+		AutoIgnite()
 	end
 
 	if Menu.Keys.harassKey then
 		Harass()
-		return
 	end
 
 	if Menu.Keys.farmKey then
@@ -333,36 +360,17 @@ function OnTick()
 		LaneClear()
 	end
 
-	if ValidTarget(target) then
-		KillSteal(target)
+	if ULT.using then
+		if (os.clock() - ULT.last) > 2.5 then
+			ULT.using = false
+			ULT.last  = 0
+		end
 	end
 
 	if Menu.Misc.WardJump.wardjumpKey then
     		local WardPos = (GetDistanceSqr(mousePos) <= 600 * 600 and mousePos) or (Menu.Misc.WardJump.maxjump and myHero + (Vector(mousePos) - myHero):normalized()*590)
 		if WardPos then
 			WardJump(WardPos.x, WardPos.z)
-		end
-	end
-end
-
-function Checks()
-	ts:update()
-	target = ts.target
-
-	CHECKS.Q = (myHero:CanUseSpell(_Q) == READY)
-	CHECKS.W = (myHero:CanUseSpell(_W) == READY) 
-	CHECKS.E = (myHero:CanUseSpell(_E) == READY)
-	CHECKS.R = (myHero:CanUseSpell(_R) == READY)
-
-	igniteReady = (ignite ~= nil and myHero:CanUseSpell(ignite) == READY)
-
-	ITEMS.zhonyaslot = GetInventorySlotItem(3157)
-	ITEMS.zhonyaready = (ITEMS.zhonyaslot ~= nil and myHero:CanUseSpell(ITEMS.zhonyaslot) == READY)
-
-	if ULT.using then
-		if (os.clock() - ULT.last) > 2.5 then
-			ULT.using = false
-			ULT.last  = 0
 		end
 	end
 end
@@ -445,58 +453,58 @@ function OnRemoveBuff(unit, buff)
 	end
 end
 
-function AutoIgnite(enemy)
-  	dmgIgnite = ((igniteReady  and getDmg("IGNITE", enemy, myHero)) or 0) 
-	if enemy.health <= dmgIgnite and GetDistance(enemy) <= 600 and ignite ~= nil then
-		if igniteReady then
-			CastSpell(ignite, enemy)
+function AutoIgnite()
+	if myHero:CanUseSpell(ignite) == READY then
+		for i, enemy in ipairs(GetEnemyHeroes()) do
+			if ValidTarget(enemy, 600) and enemy.health <= getDmg("IGNITE", enemy, myHero) then
+				CastSpell(ignite, enemy)
+			end
 		end
 	end
 end
 
-function KillSteal(enemy)
-	if GetDistance(enemy) < 700 and ValidTarget(enemy) and not TargetHaveBuff("willrevive", enemy) and not TargetHaveBuff("UndyingRage", enemy) then
-		enemyhealth = enemy.health
-		local eDmg = myHero:CalcMagicDamage(enemy, 25 * (myHero:GetSpellData(_E).level - 1) + 60 + (.4 * myHero.ap))
-		local wDmg = myHero:CalcMagicDamage(enemy, 35 * (myHero:GetSpellData(_W).level - 1) + 40 + (.25 * myHero.ap) + (.6 * myHero.addDamage))
-		local qDmg = myHero:CalcMagicDamage(enemy, 25 * (myHero:GetSpellData(_Q).level - 1) + 60 + (.45 * myHero.ap))
+function KillSteal()
+	for i, enemy in ipairs(GetEnemyHeroes()) do
+		if GetDistance(enemy) < 700 and ValidTarget(enemy) and not TargetHaveBuff("willrevive", enemy) and not TargetHaveBuff("UndyingRage", enemy) then
+			enemyhealth = enemy.health
+			local eDmg = myHero:CalcMagicDamage(enemy, 25 * (myHero:GetSpellData(_E).level - 1) + 60 + (.4 * myHero.ap))
+			local wDmg = myHero:CalcMagicDamage(enemy, 35 * (myHero:GetSpellData(_W).level - 1) + 40 + (.25 * myHero.ap) + (.6 * myHero.addDamage))
+			local qDmg = myHero:CalcMagicDamage(enemy, 25 * (myHero:GetSpellData(_Q).level - 1) + 60 + (.45 * myHero.ap))
 
-		if enemyhealth < qDmg and GetDistance(enemy) < RANGE.Q and CHECKS.Q then
-			CastSpell(_Q, enemy)
-			CastSpell(_W)
-		elseif enemyhealth < eDmg and GetDistance(enemy) < RANGE.E and CHECKS.E then
-			CastSpell(_E, enemy)
-		elseif enemyhealth < wDmg + eDmg and GetDistance(enemy) < 700 and CHECKS.E and CHECKS.W then
-			CastSpell(_E, enemy)
-			CastSpell(_W)
-		elseif enemyhealth < wDmg and GetDistance(enemy) < RANGE.W and CHECKS.W then
-			CastSpell(_W)
-		elseif GetDistance(enemy) < 300 and enemyhealth < qDmg + wDmg and CHECKS.Q and CHECKS.W then
-			CastSpell(_Q, enemy)
-			CastSpell(_W)
-		elseif GetDistance(enemy) < 375 and GetDistance(enemy) > 300 and enemyhealth < qDmg + wDmg and CHECKS.Q and CHECKS.W then 
-			CastSpell(_W)
-			CastSpell(_Q, enemy)
-		elseif GetDistance(enemy) < 700 and GetDistance(enemy) > 600 and enemyhealth < qDmg + eDmg and CHECKS.Q and CHECKS.E then 
-			CastSpell(_E, enemy)
-			CastSpell(_Q, enemy)
-		elseif GetDistance(enemy) < 600 and enemyhealth < qDmg + eDmg and CHECKS.Q and CHECKS.E then 
-			CastSpell(_Q, enemy)
-			CastSpell(_E, enemy)
-		elseif GetDistance(enemy) < 700 and GetDistance(enemy) > 600 and enemyhealth < wDmg + eDmg + qDmg and CHECKS.Q and CHECKS.E and CHECKS.W then
-			CastSpell(_E, enemy)
-			CastSpell(_Q, enemy)	
-			CastSpell(_W)
-		elseif GetDistance(enemy) < 600 and enemyhealth < wDmg + eDmg + qDmg and CHECKS.Q and CHECKS.E and CHECKS.W then
-			CastSpell(_Q, enemy)
-			CastSpell(_E, enemy)
-			CastSpell(_W)
-		end
+			if enemyhealth < qDmg and GetDistance(enemy) < RANGE.Q and CHECKS.Q then
+				CastSpell(_Q, enemy)
+				CastSpell(_W)
+			elseif enemyhealth < eDmg and GetDistance(enemy) < RANGE.E and CHECKS.E then
+				CastSpell(_E, enemy)
+			elseif enemyhealth < wDmg + eDmg and GetDistance(enemy) < 700 and CHECKS.E and CHECKS.W then
+				CastSpell(_E, enemy)
+				CastSpell(_W)
+			elseif enemyhealth < wDmg and GetDistance(enemy) < RANGE.W and CHECKS.W then
+				CastSpell(_W)
+			elseif GetDistance(enemy) < 300 and enemyhealth < qDmg + wDmg and CHECKS.Q and CHECKS.W then
+				CastSpell(_Q, enemy)
+				CastSpell(_W)
+			elseif GetDistance(enemy) < 375 and GetDistance(enemy) > 300 and enemyhealth < qDmg + wDmg and CHECKS.Q and CHECKS.W then 
+				CastSpell(_W)
+				CastSpell(_Q, enemy)
+			elseif GetDistance(enemy) < 700 and GetDistance(enemy) > 600 and enemyhealth < qDmg + eDmg and CHECKS.Q and CHECKS.E then 
+				CastSpell(_E, enemy)
+				CastSpell(_Q, enemy)
+			elseif GetDistance(enemy) < 600 and enemyhealth < qDmg + eDmg and CHECKS.Q and CHECKS.E then 
+				CastSpell(_Q, enemy)
+				CastSpell(_E, enemy)
+			elseif GetDistance(enemy) < 700 and GetDistance(enemy) > 600 and enemyhealth < wDmg + eDmg + qDmg and CHECKS.Q and CHECKS.E and CHECKS.W then
+				CastSpell(_E, enemy)
+				CastSpell(_Q, enemy)	
+				CastSpell(_W)
+			elseif GetDistance(enemy) < 600 and enemyhealth < wDmg + eDmg + qDmg and CHECKS.Q and CHECKS.E and CHECKS.W then
+				CastSpell(_Q, enemy)
+				CastSpell(_E, enemy)
+				CastSpell(_W)
+			end
 
-		if Menu.KS.ignite then
-			AutoIgnite(enemy)
+			enemy = nil
 		end
-		enemy = nil
 	end
 end
 
@@ -610,7 +618,7 @@ function WardJump(x, y, enemy)
 		local Jumped = false
 		local WardDistance = 300
 
-		--Ally jump
+		-- Ally jump
 		for i, ally in ipairs(GetAllyHeroes()) do
 			if ValidTarget(ally, RANGE.E, false) then
 				if GetDistanceSqr(ally, mousePos) <= WardDistance*WardDistance then
@@ -732,15 +740,15 @@ function DrawCircleNextLvl(x, y, z, radius, width, color, chordlength)
 end
 
 function OnDraw()
-	if Menu.Draw.drawQ and CHECKS.Q then
+	if Menu.Draw.drawQ then
 		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.Q, ARGB(255, 51, 153, 255))
 	end
 
-	if Menu.Draw.drawW and CHECKS.W then
+	if Menu.Draw.drawW then
 		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.W, ARGB(255, 102, 178 , 0 ))
 	end
 
-	if Menu.Draw.drawE and CHECKS.E then
+	if Menu.Draw.drawE then
 		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.E, ARGB(255, 178, 0 , 0 ))
 	end
 
@@ -753,7 +761,7 @@ function GetSlotItem(id, unit)
 		return ___GetInventorySlotItem(id, unit)
 	end
 
-	local name	= ItemNames[id]
+	local name = ItemNames[id]
 	for slot = ITEM_1, ITEM_7 do
 		local item = unit:GetSpellData(slot).name
 		if ((#item > 0) and (item:lower() == name:lower())) then
