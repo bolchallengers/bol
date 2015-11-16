@@ -12,21 +12,15 @@
 	Version: 1.0
 		* Costomizable Key Settings.
 		* Costomizable Harass, use Q, W, E (if target have poison).
-		* Customizable Full combo. with R if enemy killable.
-		* Customizable farm with Q, W.
+		* Customizable Full combo. use Q, W, E (if target have poison).
+		* Customizable farm with Q, W, E (if target have poison).
 ]]-- 
 
 if myHero.charName ~= "Cassiopeia" then
 	return
 end
 
--- HELPERS
-local HELPERS = {
-	E = {last = 0, delay = 0, canuse = true},
-	R = {using  = false, last = 0}
-}
-
---Spell Data
+-- Spells
 local Ranges = {[_Q] = 850, [_W] = 850, [_E] = 700, [_R] = 825}
 local Widths = {[_Q] = 75, [_W] = 106, [_R] = 80 * math.pi / 180}
 local Delays = {[_Q] = 0.6, [_W] = 0.5, [_R] = 0.3}
@@ -40,9 +34,6 @@ local ITEMS = {
 	zhonyaslot = nil,
 	zhonyaready = false
 }
-
--- Kill Steal
-local enemyhealth = 0
 
 -- Updater
 local UPDATE_HOST = "raw.githubusercontent.com"
@@ -76,93 +67,6 @@ function UpdateScript()
 	end
 end
 
-function fixItems()
-	ItemNames = {
-		[3303]	= "ArchAngelsDummySpell",
-		[3007]	= "ArchAngelsDummySpell",
-		[3144]	= "BilgewaterCutlass",
-		[3188]	= "ItemBlackfireTorch",
-		[3153]	= "ItemSwordOfFeastAndFamine",
-		[3405]	= "TrinketSweeperLvl1",
-		[3411]	= "TrinketOrbLvl1",
-		[3166]	= "TrinketTotemLvl1",
-		[3450]	= "OdinTrinketRevive",
-		[2041]	= "ItemCrystalFlask",
-		[2054]	= "ItemKingPoroSnack",
-		[2138]	= "ElixirOfIron",
-		[2137]	= "ElixirOfRuin",
-		[2139]	= "ElixirOfSorcery",
-		[2140]	= "ElixirOfWrath",
-		[3184]	= "OdinEntropicClaymore",
-		[2050]	= "ItemMiniWard",
-		[3401]	= "HealthBomb",
-		[3363]	= "TrinketOrbLvl3",
-		[3092]	= "ItemGlacialSpikeCast",
-		[3460]	= "AscWarp",
-		[3361]	= "TrinketTotemLvl3",
-		[3362]	= "TrinketTotemLvl4",
-		[3159]	= "HextechSweeper",
-		[2051]	= "ItemHorn",
-		--[2003] = "RegenerationPotion",
-		[3146]	= "HextechGunblade",
-		[3187]	= "HextechSweeper",
-		[3190]	= "IronStylus",
-		[2004]	= "FlaskOfCrystalWater",
-		[3139]	= "ItemMercurial",
-		[3222]	= "ItemMorellosBane",
-		[3042]	= "Muramana",
-		[3043]	= "Muramana",
-		[3180]	= "OdynsVeil",
-		[3056]	= "ItemFaithShaker",
-		[2047]	= "OracleExtractSight",
-		[3364]	= "TrinketSweeperLvl3",
-		[2052]	= "ItemPoroSnack",
-		[3140]	= "QuicksilverSash",
-		[3143]	= "RanduinsOmen",
-		[3074]	= "ItemTiamatCleave",
-		[3800]	= "ItemRighteousGlory",
-		[2045]	= "ItemGhostWard",
-		[3342]	= "TrinketOrbLvl1",
-		[3040]	= "ItemSeraphsEmbrace",
-		[3048]	= "ItemSeraphsEmbrace",
-		[2049]	= "ItemGhostWard",
-		[3345]	= "OdinTrinketRevive",
-		[2044]	= "SightWard",
-		[3341]	= "TrinketSweeperLvl1",
-		[3069]	= "shurelyascrest",
-		[3599]	= "KalistaPSpellCast",
-		[3185]	= "HextechSweeper",
-		[3077]	= "ItemTiamatCleave",
-		[2009]	= "ItemMiniRegenPotion",
-		[2010]	= "ItemMiniRegenPotion",
-		[3023]	= "ItemWraithCollar",
-		[3290]	= "ItemWraithCollar",
-		[2043]	= "VisionWard",
-		[3340]	= "TrinketTotemLvl1",
-		[3090]	= "ZhonyasHourglass",
-		[3154]	= "wrigglelantern",
-		[3142]	= "YoumusBlade",
-		[3157]	= "ZhonyasHourglass",
-		[3512]	= "ItemVoidGate",
-		[3131]	= "ItemSoTD",
-		[3137]	= "ItemDervishBlade",
-		[3352]	= "RelicSpotter",
-		[3350]	= "TrinketTotemLvl2",
-	}
-	
-	_G.ITEM_1	= 06
-	_G.ITEM_2	= 07
-	_G.ITEM_3	= 08
-	_G.ITEM_4	= 09
-	_G.ITEM_5	= 10
-	_G.ITEM_6	= 11
-	_G.ITEM_7	= 12
-
-	___GetInventorySlotItem	= rawget(_G, "GetInventorySlotItem")
-	_G.GetInventorySlotItem	= GetSlotItem
-end
-
-
 -- Load Libs
 if FileExist(LIB_PATH .. "/SxOrbWalk.lua") then
 	require("SxOrbWalk")
@@ -183,9 +87,6 @@ function OnLoad()
 	-- Check Update
 	UpdateScript()
 
-	-- Fix item casting issue
-	fixItems()
-
 	-- Load Menu
 	Menu = scriptConfig("Challengers Cassiopeia", "Cassiopeia")
 
@@ -194,7 +95,7 @@ function OnLoad()
 
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
-		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("z"))
+		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Harass Settings", "Harass")
 		Menu.Harass:addParam("useQ", "Use (Q)", SCRIPT_PARAM_ONOFF, true)
@@ -213,11 +114,11 @@ function OnLoad()
 		Menu.KS:addParam("ignite", "Use Ignite", SCRIPT_PARAM_ONOFF, true)
 
 	Menu:addSubMenu("["..myHero.charName.."] - Farm Settings", "Farm")
-		Menu.Farm:addParam("useQ",  "Use Q", SCRIPT_PARAM_LIST, 4, { "No", "Freeze", "LaneClear", "Both" })
-		Menu.Farm:addParam("useW",  "Use W", SCRIPT_PARAM_LIST, 3, { "No", "Freeze", "LaneClear", "Both" })
-		Menu.Farm:addParam("useE",  "Use E", SCRIPT_PARAM_LIST, 3, { "No", "Freeze", "LaneClear", "Both" })
-		Menu.Farm:addParam("useFreeze", "Farm freezing", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("C"))
-		Menu.Farm:addParam("useLaneClear", "Farm LaneClear", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("V"))
+		Menu.Farm:addParam("useQ",  "Use Q", SCRIPT_PARAM_LIST, 4, {"No", "Freeze", "LaneClear", "Both"})
+		Menu.Farm:addParam("useW",  "Use W", SCRIPT_PARAM_LIST, 3, {"No", "Freeze", "LaneClear", "Both"})
+		Menu.Farm:addParam("useE",  "Use E", SCRIPT_PARAM_LIST, 3, {"No", "Freeze", "LaneClear", "Both"})
+		Menu.Farm:addParam("useFreeze", "Farm freezing", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("V"))
+		Menu.Farm:addParam("useLaneClear", "Farm LaneClear", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("X"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Humanizer Settings", "humanizer")
@@ -256,7 +157,7 @@ function OnLoad()
 	Menu:addTS(ts)
 
 	-- Minions
-	enemyMinions = minionManager(MINION_ENEMY,  Ranges[__W], myHero, MINION_SORT_MAXHEALTH_DEC)
+	enemyMinions = minionManager(MINION_ENEMY, Ranges[_W], myHero, MINION_SORT_MAXHEALTH_DEC)
 
 	-- Ignite check
 	if myHero:GetSpellData(SUMMONER_1).name:find("summonerdot") then
@@ -298,14 +199,6 @@ function OnTick()
 	if Menu.Keys.clearKey then
 		LaneClear()
 	end
-
-	if Menu.Misc.humanizer.useDelay then
-		if not HELPERS.E.canuse then
-			if (os.clock() - HELPERS.E.last) > HELPERS.E.delay then
-				HELPERS.E.canuse = true
-			end
-		end
-	end
 end
 
 function isTargetPoisoned(uint)
@@ -321,32 +214,25 @@ end
 
 function Combo()
 	if ValidTarget(target) then
-		if Q:IsReady() and Menu.Combo.useQ then 
-			if GetDistance(target) <= Ranges[_Q] then
+		local useQ = Menu.Combo.useQ
+		local useW = Menu.Combo.useW
+		local useE = Menu.Combo.useE
+
+		if useQ then
+			if Q:IsReady() and GetDistance(target) <= Ranges[_Q] then
 				Q:Cast(target)
 			end
 		end
 
-		if W:IsReady() and Menu.Combo.useW then
-			if GetDistance(target) <= Ranges[_Q] then
+		if useW then
+			if W:IsReady() and GetDistance(target) <= Ranges[_W] then
 				W:Cast(target)
 			end
 		end
 
-		if E:IsReady() and Menu.Combo.useE then
-			if GetDistance(target) <=  Ranges[_E] and isTargetPoisoned(target) then
+		if useE then
+			if E:IsReady() and GetDistance(target) <= Ranges[_E] and isTargetPoisoned(target) then
 				E:Cast(target)
-			end
-		end
-
-		if R:IsReady() and Menu.Combo.ultimate.useR then
-			if GetDistance(target) <= Ranges[_R] then
-				local dmgR = getDmg("R", unit, myHero)
-				if unit.health <= dmgR then
-					R:SetAOE(true, R.width, CountObjectsNearPos(Vector(target), 500, 500, SelectUnits(GetEnemyHeroes(), function(t) return ValidTarget(t) end)))
-					R:Cast(target)
-					R:SetAOE(true)
-				end
 			end
 		end
 	end
@@ -364,20 +250,24 @@ end
 
 function Harass()
 	if ValidTarget(target) then
-		if Q:IsReady() and Menu.Harass.useQ then 
-			if GetDistance(target) <= Ranges[_Q] then
+		local useQ = Menu.Harass.useQ
+		local useW = Menu.Harass.useW
+		local useE = Menu.Harass.useE
+
+		if useQ then
+			if Q:IsReady() and GetDistance(target) <= Ranges[_Q] then
 				Q:Cast(target)
 			end
 		end
 
-		if W:IsReady() and Menu.Harass.useW then
-			if GetDistance(target) <= Ranges[_Q] then
+		if useW then
+			if W:IsReady() and GetDistance(target) <= Ranges[_W] then
 				W:Cast(target)
 			end
 		end
 
-		if E:IsReady() and Menu.Harass.useE then
-			if GetDistance(target) <=  Ranges[_E] and isTargetPoisoned(target) then
+		if useE then
+			if E:IsReady() and GetDistance(target) <= Ranges[_E] and isTargetPoisoned(target) then
 				E:Cast(target)
 			end
 		end
@@ -426,7 +316,7 @@ function Farm()
 		local PoisonedMinions = SelectUnits(enemyMinions.objects, function(t) return ValidTarget(t) and isTargetPoisoned(t) end)
 		for i, minion in ipairs(PoisonedMinions) do
 			local time = 0.25 + 1900 / GetDistance(minion.visionPos, myHero.visionPos) + 0.1
-			if VP:GetPredictedHealth(minion, time) - DLib:CalcSpellDamage(minion, _E) < 0 and E:IsReady() then
+			if VP:GetPredictedHealth(minion, time) and E:IsReady() then
 				CastSpell(_E, minion)
 				break
 			end
@@ -477,17 +367,20 @@ end
 
 function OnDraw()
 	if Menu.Draw.drawQ then
-		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.Q, ARGB(255, 51, 153, 255))
+		DrawCircle(myHero.x, myHero.y, myHero.z, Ranges[_Q], ARGB(255, 50, 100, 255))
 	end
 
 	if Menu.Draw.drawW then
-		DrawCircle(myHero.x, myHero.y, myHero.z, RANGE.W, ARGB(255, 102, 178 , 0 ))
+		DrawCircle(myHero.x, myHero.y, myHero.z, Ranges[_W], ARGB(255, 100, 150, 255))
 	end
 
 	if Menu.Draw.drawE then
-		DrawCircle(myHero.x, myHero.y, myHero.z,  Ranges[_E], ARGB(255, 178, 0 , 0 ))
+		DrawCircle(myHero.x, myHero.y, myHero.z,  Ranges[_E], ARGB(255, 150, 200, 255))
 	end
 
+	if Menu.Draw.drawR then
+		DrawCircle(myHero.x, myHero.y, myHero.z,  Ranges[_R], ARGB(255, 200, 250, 255))
+	end
 end
 
 function random(min, max, precision)
@@ -497,20 +390,4 @@ function random(min, max, precision)
 	local offset = range * num
 	local randomnum = min + offset
 	return math.floor(randomnum * math.pow(10, precision) + 0.5) / math.pow(10, precision)
-end
-
-function GetSlotItem(id, unit)
-	unit = unit or myHero
-
-	if (not ItemNames[id]) then
-		return ___GetInventorySlotItem(id, unit)
-	end
-
-	local name = ItemNames[id]
-	for slot = ITEM_1, ITEM_7 do
-		local item = unit:GetSpellData(slot).name
-		if ((#item > 0) and (item:lower() == name:lower())) then
-			return slot
-		end
-	end
 end
