@@ -68,10 +68,6 @@ function UpdateScript()
 end
 
 -- Load Libs
-if FileExist(LIB_PATH .. "/SxOrbWalk.lua") then
-	require("SxOrbWalk")
-end
-
 if FileExist(LIB_PATH .. "/VPrediction.lua") then
 	require("VPrediction")
 end
@@ -87,12 +83,30 @@ function OnLoad()
 	-- Check Update
 	UpdateScript()
 
+	local function LoadOrb()
+		if not _G.NebelwolfisOrbWalkerLoaded then
+			require "Nebelwolfi's Orb Walker"
+			NebelwolfisOrbWalkerClass()
+		end
+	end
+	if not FileExist(LIB_PATH.."Nebelwolfi's Orb Walker.lua") then
+		DownloadFile("http://raw.githubusercontent.com/nebelwolfi/BoL/master/Common/Nebelwolfi's Orb Walker.lua", LIB_PATH.."Nebelwolfi's Orb Walker.lua", function()
+			LoadOrb()
+		end)
+	else
+		local f = io.open(LIB_PATH.."Nebelwolfi's Orb Walker.lua")
+		f = f:read("*all")
+		if f:sub(1,4) == "func" then
+			DownloadFile("http://raw.githubusercontent.com/nebelwolfi/BoL/master/Common/Nebelwolfi's Orb Walker.lua", LIB_PATH.."Nebelwolfi's Orb Walker.lua", function()
+				LoadOrb()
+			end)
+		else
+			LoadOrb()
+		end
+	end
+
 	-- Load Menu
 	Menu = scriptConfig("Challengers Cassiopeia", "Cassiopeia")
-
-	Menu:addSubMenu("["..myHero.charName.."] - Orbwalk Settings", "orbwalk")
-		SxOrb:LoadToMenu(Menu.orbwalk)
-
 	Menu:addSubMenu("["..myHero.charName.."] - Key Settings", "Keys")
 		Menu.Keys:addParam("comboKey", "Combo key", SCRIPT_PARAM_ONKEYDOWN, false, 32)
 		Menu.Keys:addParam("harassKey", "Harass Key", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("C"))
@@ -117,8 +131,8 @@ function OnLoad()
 		Menu.Farm:addParam("useQ",  "Use Q", SCRIPT_PARAM_LIST, 4, {"No", "Freeze", "LaneClear", "Both"})
 		Menu.Farm:addParam("useW",  "Use W", SCRIPT_PARAM_LIST, 3, {"No", "Freeze", "LaneClear", "Both"})
 		Menu.Farm:addParam("useE",  "Use E", SCRIPT_PARAM_LIST, 3, {"No", "Freeze", "LaneClear", "Both"})
-		Menu.Farm:addParam("useFreeze", "Farm freezing", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("V"))
-		Menu.Farm:addParam("useLaneClear", "Farm LaneClear", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("X"))
+		Menu.Farm:addParam("useFreeze", "Farm freezing", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("X"))
+		Menu.Farm:addParam("useLaneClear", "Farm LaneClear", SCRIPT_PARAM_ONKEYDOWN, false,   string.byte("V"))
 
 	Menu:addSubMenu("["..myHero.charName.."] - Misc Settings", "Misc")
 		Menu.Misc:addSubMenu("["..myHero.charName.."] - Humanizer Settings", "humanizer")
